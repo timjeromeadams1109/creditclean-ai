@@ -1,8 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand palette */
+  --cc-primary: #4F46E5;
+  --cc-primary-light: #6366F1;
+  --cc-primary-dark: #4338CA;
+  --cc-success: #10B981;
+  --cc-warning: #F59E0B;
+  --cc-danger: #F43F5E;
+
+  /* Bureau brand colors */
+  --cc-equifax: #E11D48;
+  --cc-experian: #2563EB;
+  --cc-transunion: #059669;
+
+  /* Surface */
+  --background: #FAFAF9;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --border: #E7E5E4;
+  --muted: #78716C;
+
+  /* Sidebar */
+  --sidebar-bg: #18181B;
+  --sidebar-border: #27272A;
+  --sidebar-text: #A1A1AA;
+  --sidebar-text-active: #FAFAFA;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090B;
+    --foreground: #FAFAFA;
+    --card: #18181B;
+    --border: #27272A;
+    --muted: #A1A1AA;
+  }
 }
 
 @theme inline {
@@ -12,15 +45,55 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+}
+
+/* Selection color */
+::selection {
+  background-color: #4F46E540;
+  color: inherit;
+}
+
+/* Focus ring utility */
+*:focus-visible {
+  outline: 2px solid var(--cc-primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6D3D1;
+  border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: #3F3F46;
+  }
+}
+
+/* Progress ring animation */
+@keyframes progress-ring {
+  from {
+    stroke-dashoffset: 283;
+  }
 }
