@@ -6,7 +6,7 @@ const FROM = process.env.EMAIL_FROM || "App <notifications@example.com>";
 
 export async function sendNotification(to: string[], subject: string, html: string) {
   if (!process.env.RESEND_API_KEY) {
-    console.log(`[Email] Skipped (no API key): ${subject}`);
+    console.log("[Email] Skipped (no API key configured)");
     return;
   }
   await resend.emails.send({ from: FROM, to, subject, html });

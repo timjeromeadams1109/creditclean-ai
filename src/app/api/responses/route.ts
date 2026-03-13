@@ -24,6 +24,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
+    // File type validation
+    const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+    const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"];
+    const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    if (!ALLOWED_TYPES.includes(file.type) || !ALLOWED_EXTENSIONS.includes(ext)) {
+      return NextResponse.json({ error: "Only PDF, JPG, and PNG files are allowed" }, { status: 400 });
+    }
+
+    // File size validation (10MB max)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: "File size must be under 10MB" }, { status: 400 });
+    }
+
     if (!disputeRoundId) {
       return NextResponse.json({ error: "dispute_round_id is required" }, { status: 400 });
     }

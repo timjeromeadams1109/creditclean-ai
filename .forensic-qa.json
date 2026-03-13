@@ -1,0 +1,60 @@
+{
+  "baseUrl": "https://creditclean-ai.vercel.app",
+  "pages": [
+    { "path": "/", "name": "Landing Page", "expectStatus": 200 },
+    { "path": "/dashboard", "name": "Dashboard", "expectStatus": 200 },
+    { "path": "/items", "name": "Credit Items", "expectStatus": 200 },
+    { "path": "/items/new", "name": "Add Item", "expectStatus": 200 },
+    { "path": "/forensic", "name": "Forensic Analysis", "expectStatus": 200 },
+    { "path": "/forensic/analyze", "name": "Forensic Analyze", "expectStatus": 200 },
+    { "path": "/letters", "name": "Letters", "expectStatus": 200 },
+    { "path": "/responses", "name": "Responses", "expectStatus": 200 },
+    { "path": "/scores", "name": "Score Tracking", "expectStatus": 200 },
+    { "path": "/admin", "name": "Admin", "expectStatus": 200 },
+    { "path": "/privacy", "name": "Privacy Policy", "expectStatus": 200 },
+    { "path": "/terms", "name": "Terms of Service", "expectStatus": 200 },
+    { "path": "/disclaimer", "name": "Disclaimer", "expectStatus": 200 }
+  ],
+  "apiEndpoints": [
+    { "path": "/api/items", "method": "GET", "expectAuth": true },
+    { "path": "/api/scores", "method": "GET", "expectAuth": true },
+    { "path": "/api/responses", "method": "POST", "expectAuth": true },
+    { "path": "/api/disputes/generate", "method": "POST", "expectAuth": true },
+    { "path": "/api/forensic/analyze", "method": "POST", "expectAuth": true },
+    { "path": "/api/stripe/webhook", "method": "POST", "expectAuth": false }
+  ],
+  "userFlows": [
+    {
+      "name": "Landing page CTA flow",
+      "steps": [
+        { "action": "navigate", "target": "/" },
+        { "action": "click", "target": "a[href='/auth/signup']", "description": "Click Start Free Trial" },
+        { "action": "expectUrl", "target": "/auth/signup" }
+      ]
+    },
+    {
+      "name": "Calculator interaction",
+      "steps": [
+        { "action": "navigate", "target": "/" },
+        { "action": "scroll", "target": "#calculator" },
+        { "action": "expectVisible", "target": "input[type='range']" }
+      ]
+    },
+    {
+      "name": "Navigation links",
+      "steps": [
+        { "action": "navigate", "target": "/" },
+        { "action": "click", "target": "a[href='#pricing']" },
+        { "action": "expectVisible", "target": "#pricing" }
+      ]
+    }
+  ],
+  "authConfig": {
+    "loginUrl": "/auth/signin",
+    "testUser": {
+      "email": "test@creditclean.ai",
+      "password": "TestUser2026!"
+    },
+    "protectedPaths": ["/dashboard", "/items", "/forensic", "/letters", "/responses", "/scores", "/admin"]
+  }
+}

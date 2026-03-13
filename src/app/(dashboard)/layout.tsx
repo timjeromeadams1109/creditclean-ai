@@ -88,10 +88,10 @@ export default function DashboardLayout({
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 px-6">
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-500/25">
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-emerald-500 shadow-lg shadow-teal-500/25">
             <Shield className="h-4.5 w-4.5 text-white" />
             {/* Glow effect */}
-            <div className="absolute inset-0 rounded-lg bg-indigo-500/20 blur-md" />
+            <div className="absolute inset-0 rounded-lg bg-teal-500/20 blur-md" />
           </div>
           <span className="text-[15px] font-semibold tracking-tight text-white">
             CreditClean AI
@@ -124,11 +124,11 @@ export default function DashboardLayout({
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-indigo-500"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-teal-500"
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
-                <item.icon className={`h-[18px] w-[18px] ${isActive ? "text-indigo-400" : "text-zinc-500 group-hover:text-zinc-400"}`} />
+                <item.icon className={`h-[18px] w-[18px] ${isActive ? "text-teal-400" : "text-zinc-500 group-hover:text-zinc-400"}`} />
                 {item.label}
               </Link>
             );
@@ -138,7 +138,7 @@ export default function DashboardLayout({
         {/* User section at bottom */}
         <div className="border-t border-zinc-800 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-[13px] font-semibold text-white shadow-lg shadow-indigo-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-[13px] font-semibold text-white shadow-lg shadow-teal-500/20">
               T
             </div>
             <div className="flex-1 min-w-0">
@@ -198,7 +198,7 @@ export default function DashboardLayout({
           <div className="flex-1" />
 
           {/* Search */}
-          <div className="hidden md:flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-[13px] text-stone-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 w-64 transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10">
+          <div className="hidden md:flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-[13px] text-stone-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 w-64 transition-colors focus-within:border-teal-300 focus-within:ring-2 focus-within:ring-teal-500/10">
             <Search className="h-3.5 w-3.5" />
             <input
               type="text"
@@ -213,11 +213,11 @@ export default function DashboardLayout({
           {/* Notifications */}
           <button className="relative rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors">
             <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-indigo-600 ring-2 ring-white dark:ring-zinc-950" />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-teal-600 ring-2 ring-white dark:ring-zinc-950" />
           </button>
 
           {/* User avatar (top bar) */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-[12px] font-semibold text-white cursor-pointer hover:shadow-md transition-shadow">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-[12px] font-semibold text-white cursor-pointer hover:shadow-md transition-shadow">
             T
           </div>
         </header>
