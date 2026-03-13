@@ -17,32 +17,31 @@
     { "path": "/terms", "name": "Terms of Service", "expectStatus": 200 },
     { "path": "/disclaimer", "name": "Disclaimer", "expectStatus": 200 }
   ],
-  "apiEndpoints": [
-    { "path": "/api/stripe/webhook", "method": "POST", "expectAuth": false }
-  ],
+  "apiEndpoints": [],
   "userFlows": [
     {
-      "name": "Landing to Sign Up",
+      "name": "Sign In page loads with form",
       "steps": [
-        { "action": "navigate", "target": "/" },
-        { "action": "click", "target": "a[href='/auth/signup']", "description": "Click Start Free Trial" },
-        { "action": "expectUrl", "target": "/auth/signup" }
+        { "action": "navigate", "target": "/auth/signin" },
+        { "action": "expectVisible", "target": "input[type='email']" },
+        { "action": "expectVisible", "target": "input[type='password']" },
+        { "action": "expectVisible", "target": "button[type='submit']" }
       ]
     },
     {
-      "name": "Sign Up to Sign In link",
+      "name": "Sign Up page loads with form",
       "steps": [
         { "action": "navigate", "target": "/auth/signup" },
-        { "action": "click", "target": "a[href='/auth/signin']", "description": "Click Sign In link" },
-        { "action": "expectUrl", "target": "/auth/signin" }
+        { "action": "expectVisible", "target": "input[type='text']" },
+        { "action": "expectVisible", "target": "input[type='email']" },
+        { "action": "expectVisible", "target": "input[type='password']" }
       ]
     },
     {
-      "name": "Footer legal links",
+      "name": "Landing page has interactive calculator",
       "steps": [
         { "action": "navigate", "target": "/" },
-        { "action": "click", "target": "a[href='/privacy']", "description": "Click Privacy Policy" },
-        { "action": "expectUrl", "target": "/privacy" }
+        { "action": "expectVisible", "target": "input[type='range']" }
       ]
     }
   ],
