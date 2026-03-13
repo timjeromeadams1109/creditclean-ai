@@ -25,6 +25,7 @@ import type {
   ForensicFinding,
   Recommendation,
 } from "@/lib/forensic/types";
+import { DisputeStrategy } from "@/lib/disputes/types";
 
 const riskColors: Record<string, string> = {
   critical: "bg-red-500",
@@ -84,6 +85,9 @@ export default function ForensicReportPage() {
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
   const [generatingLetters, setGeneratingLetters] = useState(false);
   const [creatingItems, setCreatingItems] = useState(false);
+  const [downloadingReport, setDownloadingReport] = useState(false);
+  const [downloadingAllLetters, setDownloadingAllLetters] = useState(false);
+  const [generatingLetterId, setGeneratingLetterId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchReport() {
@@ -149,6 +153,90 @@ export default function ForensicReportPage() {
     }
   };
 
+  const handleDownloadReportPDF = async () => {
+    if (!report) return;
+    setDownloadingReport(true);
+    try {
+      const res = await fetch(`/api/pdf/forensic-report/${report.id}`);
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `forensic-report-${report.bureau}-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silent fail — could add toast later
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
+
+  const handleDownloadAllLetters = async () => {
+    if (!report) return;
+    setDownloadingAllLetters(true);
+    try {
+      // Generate all letters first if none exist, then redirect to letters page for individual downloads
+      const res = await fetch("/api/forensic/generate-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId: report.id }),
+      });
+      if (!res.ok) throw new Error("Letter generation failed");
+      router.push("/letters");
+    } catch {
+      // Silent fail
+    } finally {
+      setDownloadingAllLetters(false);
+    }
+  };
+
+  const handleGenerateSingleLetter = async (rec: Recommendation, finding: ForensicFinding) => {
+    const letterId = `${finding.id}-${rec.action}`;
+    setGeneratingLetterId(letterId);
+    try {
+      // First create the credit item
+      const itemRes = await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bureaus: [finding.bureau],
+          item_type: finding.itemType.toLowerCase().replace(/ /g, "_"),
+          creditor_name: finding.accountName,
+          account_number: finding.accountNumber?.replace(/\*/g, ""),
+          balance: finding.reportedBalance,
+          date_opened: finding.dateOpened,
+          date_reported: finding.dateReported,
+          status: finding.currentStatus,
+          remarks: finding.itemDescription,
+        }),
+      });
+      if (!itemRes.ok) throw new Error("Failed to create item");
+      const itemData = await itemRes.json();
+      const creditItemId = itemData.items?.[0]?.id;
+      if (!creditItemId) throw new Error("No item ID returned");
+
+      // Then generate the dispute letter for this item
+      const letterRes = await fetch("/api/disputes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creditItemId,
+          strategy: mapMethodToStrategy(rec.method),
+        }),
+      });
+      if (!letterRes.ok) throw new Error("Failed to generate letter");
+      router.push("/letters");
+    } catch {
+      // Silent fail
+    } finally {
+      setGeneratingLetterId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -184,15 +272,26 @@ export default function ForensicReportPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
-            <Download className="h-4 w-4" />
+          <button
+            onClick={handleDownloadReportPDF}
+            disabled={downloadingReport}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {downloadingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Full Report (PDF)
           </button>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
-            <Mail className="h-4 w-4" />
+          <button
+            onClick={handleDownloadAllLetters}
+            disabled={downloadingAllLetters}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {downloadingAllLetters ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
             All Letters (PDF)
           </button>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
+          <button
+            onClick={() => router.push("/items")}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
             <Scale className="h-4 w-4" />
             Attorney Package
           </button>
@@ -384,7 +483,9 @@ export default function ForensicReportPage() {
                           <h4 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                             Recommendations
                           </h4>
-                          {finding.recommendations.map((rec, ri) => (
+                          {finding.recommendations.map((rec, ri) => {
+                          const recLetterId = `${finding.id}-${rec.action}`;
+                          return (
                             <div
                               key={ri}
                               className="flex items-start gap-3 rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50"
@@ -403,11 +504,20 @@ export default function ForensicReportPage() {
                                   Expected: {rec.expectedOutcome}
                                 </p>
                               </div>
-                              <button className="shrink-0 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                                Generate Letter
+                              <button
+                                onClick={() => handleGenerateSingleLetter(rec, finding)}
+                                disabled={generatingLetterId === recLetterId}
+                                className="shrink-0 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                              >
+                                {generatingLetterId === recLetterId ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  "Generate Letter"
+                                )}
                               </button>
                             </div>
-                          ))}
+                          );
+                        })}
                         </div>
                       </div>
                     </motion.div>
@@ -450,46 +560,61 @@ export default function ForensicReportPage() {
         </div>
 
         <div className="space-y-3">
-          {report.prioritizedActions.map((action, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-4 rounded-lg border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                {action.priority}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                  {action.action}
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                  <span className="inline-flex rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                    {methodLabels[action.method] || action.method}
-                  </span>
-                  <span>
-                    <ArrowRight className="inline h-3 w-3" />{" "}
-                    {action.targetRecipient}
-                  </span>
+          {report.prioritizedActions.map((action, i) => {
+            // Find the matching finding for this action
+            const matchedFinding = report.findings.find((f) =>
+              f.recommendations.some((r) => r.action === action.action)
+            );
+            const actionLetterId = `action-${i}-${action.action}`;
+            return (
+              <div
+                key={i}
+                className="flex items-start gap-4 rounded-lg border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                  {action.priority}
                 </div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {action.legalBasis.map((basis) => (
-                    <span
-                      key={basis}
-                      className="text-xs text-blue-600 dark:text-blue-400"
-                    >
-                      {basis}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {action.action}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                    <span className="inline-flex rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                      {methodLabels[action.method] || action.method}
                     </span>
-                  ))}
+                    <span>
+                      <ArrowRight className="inline h-3 w-3" />{" "}
+                      {action.targetRecipient}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {action.legalBasis.map((basis) => (
+                      <span
+                        key={basis}
+                        className="text-xs text-blue-600 dark:text-blue-400"
+                      >
+                        {basis}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                    Expected: {action.expectedOutcome}
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                  Expected: {action.expectedOutcome}
-                </p>
+                <button
+                  onClick={() => matchedFinding && handleGenerateSingleLetter(action, matchedFinding)}
+                  disabled={!matchedFinding || generatingLetterId === actionLetterId}
+                  className="shrink-0 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  {generatingLetterId === actionLetterId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Generate Letter"
+                  )}
+                </button>
               </div>
-              <button className="shrink-0 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                Generate Letter
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
 
@@ -528,6 +653,20 @@ export default function ForensicReportPage() {
       </motion.div>
     </div>
   );
+}
+
+function mapMethodToStrategy(method: string): DisputeStrategy {
+  const map: Record<string, DisputeStrategy> = {
+    dispute_letter: DisputeStrategy.FCRA_611_BUREAU_DISPUTE,
+    debt_validation: DisputeStrategy.FDCPA_809_VALIDATION,
+    verification_request: DisputeStrategy.FCRA_609_VERIFICATION,
+    goodwill: DisputeStrategy.GOODWILL_LETTER,
+    cfpb_complaint: DisputeStrategy.CFPB_COMPLAINT,
+    state_ag: DisputeStrategy.STATE_AG_COMPLAINT,
+    cease_desist: DisputeStrategy.INTENT_TO_LITIGATE,
+    intent_to_litigate: DisputeStrategy.INTENT_TO_LITIGATE,
+  };
+  return map[method] || DisputeStrategy.FCRA_611_BUREAU_DISPUTE;
 }
 
 function SummaryCard({

@@ -26,18 +26,41 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { creditItemId, strategy, userProfile } = body as {
+    const { creditItemId, strategy, userProfile: providedProfile } = body as {
       creditItemId: string;
       strategy?: DisputeStrategy;
-      userProfile: UserProfile;
+      userProfile?: UserProfile | null;
     };
 
     if (!creditItemId) {
       return NextResponse.json({ error: "creditItemId is required" }, { status: 400 });
     }
 
-    if (!userProfile) {
-      return NextResponse.json({ error: "userProfile is required" }, { status: 400 });
+    // Use provided profile or fetch from DB
+    let userProfile: UserProfile;
+    if (providedProfile) {
+      userProfile = providedProfile;
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email, address_street, address_city, address_state, address_zip, ssn_last4, dob, phone")
+        .eq("id", userId)
+        .single();
+
+      userProfile = {
+        firstName: profile?.full_name?.split(" ")[0] || "Client",
+        lastName: profile?.full_name?.split(" ").slice(1).join(" ") || "",
+        address: {
+          street: profile?.address_street || "",
+          city: profile?.address_city || "",
+          state: profile?.address_state || "",
+          zip: profile?.address_zip || "",
+        },
+        ssnLast4: profile?.ssn_last4 || "",
+        dob: profile?.dob || "",
+        email: profile?.email || "",
+        phone: profile?.phone || "",
+      };
     }
 
     // Fetch the credit item
