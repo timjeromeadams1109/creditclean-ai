@@ -75,201 +75,6 @@ const methodLabels: Record<string, string> = {
   intent_to_litigate: "Intent to Litigate",
 };
 
-// TODO: Replace with Supabase fetch
-const mockReport: ForensicReport = {
-  id: "fr-001",
-  userId: "owner",
-  bureau: "equifax",
-  analyzedAt: "2026-03-10T14:30:00Z",
-  totalItems: 12,
-  negativeItems: 8,
-  disputeableItems: 7,
-  estimatedRemovable: 5,
-  findings: [
-    {
-      id: "f-1",
-      itemDescription: "Collection account with balance discrepancy",
-      accountName: "Midland Credit Management",
-      accountNumber: "****4521",
-      bureau: "equifax",
-      itemType: "Collection",
-      reportedBalance: 4500,
-      dateOpened: "2023-06-15",
-      dateReported: "2026-02-01",
-      currentStatus: "Collection",
-      violations: [
-        {
-          law: "FDCPA",
-          uscReference: "15 U.S.C. 1692g",
-          violationType: "Failure to validate debt",
-          description:
-            "Collector failed to provide adequate validation within 30 days of initial communication.",
-          evidence:
-            "No validation notice found in report. Account shows no evidence of original creditor documentation.",
-          severity: "severe",
-          actionableSteps: [
-            "Send FDCPA 809 debt validation letter",
-            "If not validated within 30 days, demand deletion",
-          ],
-          estimatedDamages: "$1,000 per violation",
-        },
-        {
-          law: "FCRA",
-          uscReference: "15 U.S.C. 1681s-2",
-          violationType: "Inaccurate balance reporting",
-          description:
-            "Reported balance does not match original creditor records. Balance inflated by unverified fees.",
-          evidence:
-            "Original balance was $3,200. Currently reporting $4,500 with no documentation of additional charges.",
-          severity: "moderate",
-          actionableSteps: [
-            "Dispute inaccurate balance with bureau",
-            "Request itemized statement from collector",
-          ],
-        },
-      ],
-      recommendations: [
-        {
-          priority: 1,
-          action: "Send FDCPA 809 Debt Validation Letter to Midland Credit Management",
-          method: "debt_validation",
-          targetRecipient: "Midland Credit Management",
-          legalBasis: ["15 U.S.C. 1692g", "15 U.S.C. 1692e"],
-          expectedOutcome: "Debt validation or deletion within 30 days",
-          template: "fdcpa_809",
-        },
-      ],
-      riskLevel: "critical",
-      removalProbability: "very_high",
-      legalBasis: ["15 U.S.C. 1692g", "15 U.S.C. 1681s-2"],
-      priorityScore: 95,
-    },
-    {
-      id: "f-2",
-      itemDescription: "Late payment with reporting date errors",
-      accountName: "Capital One",
-      accountNumber: "****7890",
-      bureau: "equifax",
-      itemType: "Late Payment",
-      reportedBalance: 0,
-      dateOpened: "2020-03-10",
-      dateReported: "2026-01-15",
-      currentStatus: "Open",
-      violations: [
-        {
-          law: "FCRA",
-          uscReference: "15 U.S.C. 1681s-2(a)",
-          violationType: "Reporting outdated information",
-          description:
-            "Late payment reported beyond the 7-year reporting window for the delinquency date shown.",
-          evidence:
-            "First delinquency date of 02/2019 exceeds the 7-year FCRA reporting limit.",
-          severity: "severe",
-          actionableSteps: [
-            "Dispute with bureau citing FCRA 605(a) time limitation",
-            "Request deletion of outdated information",
-          ],
-        },
-      ],
-      recommendations: [
-        {
-          priority: 2,
-          action: "Send FCRA 611 dispute to Equifax for outdated reporting",
-          method: "dispute_letter",
-          targetRecipient: "Equifax",
-          legalBasis: ["15 U.S.C. 1681c(a)", "15 U.S.C. 1681i"],
-          expectedOutcome: "Deletion of outdated late payment entry",
-          template: "fcra_611",
-        },
-      ],
-      riskLevel: "high",
-      removalProbability: "high",
-      legalBasis: ["15 U.S.C. 1681c(a)"],
-      priorityScore: 85,
-    },
-    {
-      id: "f-3",
-      itemDescription: "Medical collection under $500",
-      accountName: "IC System",
-      accountNumber: "****2233",
-      bureau: "equifax",
-      itemType: "Medical Debt",
-      reportedBalance: 340,
-      dateOpened: "2024-08-20",
-      dateReported: "2025-12-01",
-      currentStatus: "Collection",
-      violations: [
-        {
-          law: "FCRA",
-          uscReference: "15 U.S.C. 1681c-1",
-          violationType: "Medical debt under $500 on credit report",
-          description:
-            "Per FCRA amendments effective 2023, medical debts under $500 cannot appear on consumer credit reports.",
-          evidence:
-            "Balance of $340 is below the $500 threshold for medical debt reporting.",
-          severity: "critical",
-          actionableSteps: [
-            "Dispute with bureau citing medical debt reporting prohibition",
-            "File CFPB complaint if not removed within 30 days",
-          ],
-        },
-      ],
-      recommendations: [
-        {
-          priority: 1,
-          action:
-            "Send FCRA dispute to Equifax — medical debt under $500 must be removed",
-          method: "dispute_letter",
-          targetRecipient: "Equifax",
-          legalBasis: ["15 U.S.C. 1681c-1"],
-          expectedOutcome: "Mandatory deletion — medical debt under $500",
-          template: "fcra_611",
-        },
-      ],
-      riskLevel: "critical",
-      removalProbability: "very_high",
-      legalBasis: ["15 U.S.C. 1681c-1"],
-      priorityScore: 98,
-    },
-  ],
-  prioritizedActions: [
-    {
-      priority: 1,
-      action:
-        "Dispute medical collection ($340) with Equifax — mandatory deletion under FCRA",
-      method: "dispute_letter",
-      targetRecipient: "Equifax",
-      legalBasis: ["15 U.S.C. 1681c-1"],
-      expectedOutcome: "Guaranteed deletion — medical debt under $500",
-      template: "fcra_611",
-    },
-    {
-      priority: 2,
-      action:
-        "Send FDCPA 809 debt validation to Midland Credit Management",
-      method: "debt_validation",
-      targetRecipient: "Midland Credit Management",
-      legalBasis: ["15 U.S.C. 1692g"],
-      expectedOutcome: "Validation failure leads to deletion",
-      template: "fdcpa_809",
-    },
-    {
-      priority: 3,
-      action:
-        "Dispute outdated Capital One late payment with Equifax",
-      method: "dispute_letter",
-      targetRecipient: "Equifax",
-      legalBasis: ["15 U.S.C. 1681c(a)", "15 U.S.C. 1681i"],
-      expectedOutcome: "Deletion of outdated information",
-      template: "fcra_611",
-    },
-  ],
-  estimatedTimeline: "3-5 months",
-  estimatedScoreImpact: "+50-80 points",
-  totalViolations: 4,
-  violationsByLaw: { FDCPA: 1, FCRA: 3 },
-  estimatedTotalDamages: "$2,000-4,000",
-};
 
 export default function ForensicReportPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -281,12 +86,19 @@ export default function ForensicReportPage() {
   const [creatingItems, setCreatingItems] = useState(false);
 
   useEffect(() => {
-    // TODO: Fetch from /api/forensic/reports/[reportId]
-    const timer = setTimeout(() => {
-      setReport({ ...mockReport, id: reportId as string });
-      setLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
+    async function fetchReport() {
+      try {
+        const res = await fetch(`/api/forensic/reports/${reportId}`);
+        if (!res.ok) throw new Error("Failed to fetch report");
+        const data = await res.json();
+        setReport({ ...data.report, id: data.id });
+      } catch {
+        setReport(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReport();
   }, [reportId]);
 
   const handleGenerateAllLetters = async () => {
@@ -312,11 +124,26 @@ export default function ForensicReportPage() {
     if (!report) return;
     setCreatingItems(true);
     try {
-      // TODO: POST each finding as a credit_item via /api/items
-      await new Promise((r) => setTimeout(r, 1000));
+      for (const finding of report.findings) {
+        await fetch("/api/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bureau: finding.bureau,
+            item_type: finding.itemType.toLowerCase().replace(/ /g, "_"),
+            creditor_name: finding.accountName,
+            account_number: finding.accountNumber?.replace(/\*/g, ""),
+            balance: finding.reportedBalance,
+            date_opened: finding.dateOpened,
+            date_reported: finding.dateReported,
+            status: finding.currentStatus,
+            remarks: finding.itemDescription,
+          }),
+        });
+      }
       router.push("/items");
     } catch {
-      // TODO: Show error toast
+      // Silently continue — partial creation is acceptable
     } finally {
       setCreatingItems(false);
     }

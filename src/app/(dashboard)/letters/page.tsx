@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -11,6 +11,7 @@ import {
   Filter,
   X,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { DisputeStrategy } from "@/lib/disputes/types";
 
@@ -18,15 +19,27 @@ type LetterStatus = "draft" | "final" | "sent";
 
 interface LetterRow {
   id: string;
-  itemName: string;
+  round_number: number;
   strategy: DisputeStrategy;
-  recipient: string;
+  letter_content: string;
+  recipient_name: string;
+  recipient_address: string;
+  legal_basis: string[];
+  deadline_days: number;
   status: LetterStatus;
-  date: string;
-  content: string;
+  date_sent: string | null;
+  created_at: string;
+  credit_items: {
+    id: string;
+    creditor_name: string;
+    bureau: string;
+    account_number: string;
+    item_type: string;
+    balance: number;
+  } | null;
 }
 
-const strategyLabels: Record<DisputeStrategy, string> = {
+const strategyLabels: Record<string, string> = {
   [DisputeStrategy.FCRA_611_BUREAU_DISPUTE]: "FCRA 611 Bureau Dispute",
   [DisputeStrategy.FCRA_609_VERIFICATION]: "FCRA 609 Verification",
   [DisputeStrategy.FDCPA_809_VALIDATION]: "FDCPA 809 Validation",
@@ -36,50 +49,6 @@ const strategyLabels: Record<DisputeStrategy, string> = {
   [DisputeStrategy.STATE_AG_COMPLAINT]: "State AG Complaint",
   [DisputeStrategy.INTENT_TO_LITIGATE]: "Intent to Litigate",
 };
-
-// TODO: Replace with Supabase query — fetch dispute_letters for user
-const letters: LetterRow[] = [
-  {
-    id: "1",
-    itemName: "Capital One — Collection",
-    strategy: DisputeStrategy.FCRA_611_BUREAU_DISPUTE,
-    recipient: "Equifax Information Services",
-    status: "sent",
-    date: "2026-01-15",
-    content:
-      "Dear Equifax Information Services,\n\nPursuant to the Fair Credit Reporting Act, 15 U.S.C. 1681i, I am writing to dispute the following information in my credit file...\n\nThe item identified as Capital One, account ending in ****4821, is inaccurate and/or incomplete. I request that you investigate this matter and correct or delete the disputed information within 30 days as required by law.\n\nSincerely,\n[Your Name]",
-  },
-  {
-    id: "2",
-    itemName: "Capital One — Collection",
-    strategy: DisputeStrategy.FDCPA_809_VALIDATION,
-    recipient: "Midland Credit Management",
-    status: "sent",
-    date: "2026-02-20",
-    content:
-      "Dear Midland Credit Management,\n\nPursuant to the Fair Debt Collection Practices Act, 15 U.S.C. 1692g, I am requesting validation of the alleged debt...\n\nPlease provide: the original signed agreement, a complete payment history, and proof of your authority to collect.\n\nSincerely,\n[Your Name]",
-  },
-  {
-    id: "3",
-    itemName: "Medical Center of Dallas",
-    strategy: DisputeStrategy.FCRA_611_BUREAU_DISPUTE,
-    recipient: "Experian",
-    status: "final",
-    date: "2026-03-08",
-    content:
-      "Dear Experian,\n\nPursuant to the FCRA, I dispute the medical debt reported by Medical Center of Dallas...\n\nThis item is inaccurate. The HIPAA provisions require additional protections for medical debt reporting.\n\nSincerely,\n[Your Name]",
-  },
-  {
-    id: "4",
-    itemName: "Navient — Student Loan",
-    strategy: DisputeStrategy.FCRA_609_VERIFICATION,
-    recipient: "Experian",
-    status: "draft",
-    date: "2026-03-10",
-    content:
-      "Dear Experian,\n\nPursuant to 15 U.S.C. 1681g, I am requesting disclosure of all information in my consumer file regarding the Navient student loan account...\n\nSincerely,\n[Your Name]",
-  },
-];
 
 const statusConfig: Record<
   LetterStatus,
@@ -94,7 +63,7 @@ const statusConfig: Record<
   final: {
     label: "Final",
     className:
-      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+      "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800",
     icon: CheckCircle2,
   },
   sent: {
@@ -106,23 +75,91 @@ const statusConfig: Record<
 };
 
 export default function LettersPage() {
-  const [filterStatus, setFilterStatus] = useState<LetterStatus | "all">(
-    "all"
-  );
-  const [filterStrategy, setFilterStrategy] = useState<
-    DisputeStrategy | "all"
-  >("all");
+  const [letters, setLetters] = useState<LetterRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<LetterStatus | "all">("all");
+  const [filterStrategy, setFilterStrategy] = useState<DisputeStrategy | "all">("all");
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const filtered = letters.filter((l) => {
-    if (filterStatus !== "all" && l.status !== filterStatus) return false;
-    if (filterStrategy !== "all" && l.strategy !== filterStrategy) return false;
-    return true;
-  });
+  const fetchLetters = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      if (filterStrategy !== "all") params.set("strategy", filterStrategy);
+      const res = await fetch(`/api/letters?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLetters(data.letters || []);
+      }
+    } catch {
+      // Keep existing data on error
+    } finally {
+      setLoading(false);
+    }
+  }, [filterStatus, filterStrategy]);
 
-  const previewLetter = previewId
-    ? letters.find((l) => l.id === previewId)
-    : null;
+  useEffect(() => {
+    fetchLetters();
+  }, [fetchLetters]);
+
+  const handleDownload = async (letter: LetterRow) => {
+    setDownloadingId(letter.id);
+    try {
+      const res = await fetch(`/api/pdf/letter/${letter.id}`);
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const bureau = letter.credit_items?.bureau || "dispute";
+      const date = new Date().toISOString().split("T")[0];
+      a.download = `dispute-letter-${bureau}-${date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Could show toast — for now silently fail
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleMarkSent = async (letterId: string) => {
+    setUpdatingId(letterId);
+    try {
+      const res = await fetch(`/api/letters/${letterId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "sent" }),
+      });
+      if (res.ok) {
+        setLetters((prev) =>
+          prev.map((l) =>
+            l.id === letterId
+              ? { ...l, status: "sent" as LetterStatus, date_sent: new Date().toISOString().split("T")[0] }
+              : l
+          )
+        );
+      }
+    } catch {
+      // Keep existing state
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const previewLetter = previewId ? letters.find((l) => l.id === previewId) : null;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -132,7 +169,7 @@ export default function LettersPage() {
           Letters
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          All generated dispute letters. Preview, download, or mark as sent.
+          {letters.length} dispute letter{letters.length !== 1 ? "s" : ""} generated. Preview, download PDF, or mark as sent.
         </p>
       </div>
 
@@ -140,10 +177,8 @@ export default function LettersPage() {
       <div className="flex flex-wrap gap-3">
         <select
           value={filterStatus}
-          onChange={(e) =>
-            setFilterStatus(e.target.value as LetterStatus | "all")
-          }
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+          onChange={(e) => setFilterStatus(e.target.value as LetterStatus | "all")}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-teal-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <option value="all">All Statuses</option>
           <option value="draft">Draft</option>
@@ -152,33 +187,32 @@ export default function LettersPage() {
         </select>
         <select
           value={filterStrategy}
-          onChange={(e) =>
-            setFilterStrategy(e.target.value as DisputeStrategy | "all")
-          }
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+          onChange={(e) => setFilterStrategy(e.target.value as DisputeStrategy | "all")}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-teal-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <option value="all">All Strategies</option>
           {Object.entries(strategyLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
+            <option key={value} value={value}>{label}</option>
           ))}
         </select>
       </div>
 
       {/* Letters list */}
       <div className="space-y-3">
-        {filtered.length === 0 ? (
+        {letters.length === 0 ? (
           <div className="rounded-xl border border-zinc-200 bg-white py-16 text-center dark:border-zinc-800 dark:bg-zinc-900">
             <Filter className="mx-auto h-8 w-8 text-zinc-300 dark:text-zinc-600" />
             <p className="mt-2 text-sm text-zinc-500">
-              No letters match your filters.
+              {loading ? "Loading letters..." : "No letters yet. Run a forensic analysis and generate letters to get started."}
             </p>
           </div>
         ) : (
-          filtered.map((letter, i) => {
-            const sc = statusConfig[letter.status];
+          letters.map((letter, i) => {
+            const sc = statusConfig[letter.status] || statusConfig.draft;
             const StatusIcon = sc.icon;
+            const itemName = letter.credit_items
+              ? `${letter.credit_items.creditor_name} — ${letter.credit_items.bureau}`
+              : "Unknown Item";
             return (
               <motion.div
                 key={letter.id}
@@ -188,31 +222,24 @@ export default function LettersPage() {
                 className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  {/* Item + strategy */}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {letter.itemName}
+                      {itemName}
                     </p>
                     <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                      {strategyLabels[letter.strategy]} — To:{" "}
-                      {letter.recipient}
+                      {strategyLabels[letter.strategy] || letter.strategy} — To: {letter.recipient_name}
                     </p>
                   </div>
 
-                  {/* Date */}
                   <span className="shrink-0 text-sm text-zinc-500">
-                    {letter.date}
+                    {new Date(letter.created_at).toLocaleDateString()}
                   </span>
 
-                  {/* Status badge */}
-                  <span
-                    className={`inline-flex items-center gap-1 shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${sc.className}`}
-                  >
+                  <span className={`inline-flex items-center gap-1 shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${sc.className}`}>
                     <StatusIcon className="h-3 w-3" />
                     {sc.label}
                   </span>
 
-                  {/* Actions */}
                   <div className="flex shrink-0 gap-1.5">
                     <button
                       onClick={() => setPreviewId(letter.id)}
@@ -222,19 +249,29 @@ export default function LettersPage() {
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
-                      className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                      onClick={() => handleDownload(letter)}
+                      disabled={downloadingId === letter.id}
+                      className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
                       title="Download PDF"
                     >
-                      {/* TODO: Implement PDF download */}
-                      <Download className="h-4 w-4" />
+                      {downloadingId === letter.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
                     </button>
                     {letter.status !== "sent" && (
                       <button
-                        className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:border-zinc-700 dark:hover:bg-emerald-950 dark:hover:text-emerald-400"
+                        onClick={() => handleMarkSent(letter.id)}
+                        disabled={updatingId === letter.id}
+                        className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-emerald-950 dark:hover:text-emerald-400"
                         title="Mark as Sent"
                       >
-                        {/* TODO: Update status in Supabase */}
-                        <Send className="h-4 w-4" />
+                        {updatingId === letter.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </button>
                     )}
                   </div>
@@ -265,10 +302,10 @@ export default function LettersPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    {previewLetter.itemName}
+                    {previewLetter.credit_items?.creditor_name || "Dispute Letter"}
                   </h3>
                   <p className="mt-0.5 text-sm text-zinc-500">
-                    {strategyLabels[previewLetter.strategy]}
+                    {strategyLabels[previewLetter.strategy] || previewLetter.strategy} — Round {previewLetter.round_number}
                   </p>
                 </div>
                 <button
@@ -278,21 +315,34 @@ export default function LettersPage() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(previewLetter.legal_basis || []).map((basis: string) => (
+                  <span key={basis} className="rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                    {basis}
+                  </span>
+                ))}
+              </div>
               <div className="mt-4 rounded-lg bg-zinc-50 p-5 dark:bg-zinc-800">
                 <pre className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  {previewLetter.content}
+                  {previewLetter.letter_content}
                 </pre>
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  onClick={() => handleDownload(previewLetter)}
+                  disabled={downloadingId === previewLetter.id}
+                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
-                  <Download className="h-4 w-4" />
+                  {downloadingId === previewLetter.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                   Download PDF
                 </button>
                 <button
                   onClick={() => setPreviewId(null)}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
                 >
                   Close
                 </button>
