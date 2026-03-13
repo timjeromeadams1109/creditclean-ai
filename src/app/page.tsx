@@ -1018,10 +1018,14 @@ export default function HomePage() {
             <div>
               <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Resources</h4>
               <ul className="mt-4 space-y-3">
-                {["Blog", "FCRA Guide", "FDCPA Guide"].map((item) => (
-                  <li key={item}>
-                    <Link href="#" className="text-sm text-zinc-500 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400">
-                      {item}
+                {[
+                  { label: "FCRA Guide", href: "/disclaimer#federal-rights" },
+                  { label: "FDCPA Guide", href: "/disclaimer#general" },
+                  { label: "Your Rights", href: "/disclaimer#croa-notice" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="text-sm text-zinc-500 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400">
+                      {item.label}
                     </Link>
                   </li>
                 ))}
@@ -1030,10 +1034,14 @@ export default function HomePage() {
             <div>
               <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Company</h4>
               <ul className="mt-4 space-y-3">
-                {["About", "Contact", "Support"].map((item) => (
-                  <li key={item}>
-                    <Link href="#" className="text-sm text-zinc-500 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400">
-                      {item}
+                {[
+                  { label: "Contact", href: "mailto:support@creditclean.ai" },
+                  { label: "Sign In", href: "/auth/signin" },
+                  { label: "Sign Up", href: "/auth/signup" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="text-sm text-zinc-500 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400">
+                      {item.label}
                     </Link>
                   </li>
                 ))}

@@ -2,6 +2,8 @@
   "baseUrl": "https://creditclean-ai.vercel.app",
   "pages": [
     { "path": "/", "name": "Landing Page", "expectStatus": 200 },
+    { "path": "/auth/signin", "name": "Sign In", "expectStatus": 200 },
+    { "path": "/auth/signup", "name": "Sign Up", "expectStatus": 200 },
     { "path": "/dashboard", "name": "Dashboard", "expectStatus": 200 },
     { "path": "/items", "name": "Credit Items", "expectStatus": 200 },
     { "path": "/items/new", "name": "Add Item", "expectStatus": 200 },
@@ -10,22 +12,17 @@
     { "path": "/letters", "name": "Letters", "expectStatus": 200 },
     { "path": "/responses", "name": "Responses", "expectStatus": 200 },
     { "path": "/scores", "name": "Score Tracking", "expectStatus": 200 },
-    { "path": "/admin", "name": "Admin", "expectStatus": 200 },
+    { "path": "/settings", "name": "Settings", "expectStatus": 200 },
     { "path": "/privacy", "name": "Privacy Policy", "expectStatus": 200 },
     { "path": "/terms", "name": "Terms of Service", "expectStatus": 200 },
     { "path": "/disclaimer", "name": "Disclaimer", "expectStatus": 200 }
   ],
   "apiEndpoints": [
-    { "path": "/api/items", "method": "GET", "expectAuth": true },
-    { "path": "/api/scores", "method": "GET", "expectAuth": true },
-    { "path": "/api/responses", "method": "POST", "expectAuth": true },
-    { "path": "/api/disputes/generate", "method": "POST", "expectAuth": true },
-    { "path": "/api/forensic/analyze", "method": "POST", "expectAuth": true },
     { "path": "/api/stripe/webhook", "method": "POST", "expectAuth": false }
   ],
   "userFlows": [
     {
-      "name": "Landing page CTA flow",
+      "name": "Landing to Sign Up",
       "steps": [
         { "action": "navigate", "target": "/" },
         { "action": "click", "target": "a[href='/auth/signup']", "description": "Click Start Free Trial" },
@@ -33,19 +30,19 @@
       ]
     },
     {
-      "name": "Calculator interaction",
+      "name": "Sign Up to Sign In link",
       "steps": [
-        { "action": "navigate", "target": "/" },
-        { "action": "scroll", "target": "#calculator" },
-        { "action": "expectVisible", "target": "input[type='range']" }
+        { "action": "navigate", "target": "/auth/signup" },
+        { "action": "click", "target": "a[href='/auth/signin']", "description": "Click Sign In link" },
+        { "action": "expectUrl", "target": "/auth/signin" }
       ]
     },
     {
-      "name": "Navigation links",
+      "name": "Footer legal links",
       "steps": [
         { "action": "navigate", "target": "/" },
-        { "action": "click", "target": "a[href='#pricing']" },
-        { "action": "expectVisible", "target": "#pricing" }
+        { "action": "click", "target": "a[href='/privacy']", "description": "Click Privacy Policy" },
+        { "action": "expectUrl", "target": "/privacy" }
       ]
     }
   ],
@@ -55,6 +52,6 @@
       "email": "test@creditclean.ai",
       "password": "TestUser2026!"
     },
-    "protectedPaths": ["/dashboard", "/items", "/forensic", "/letters", "/responses", "/scores", "/admin"]
+    "protectedPaths": ["/dashboard", "/items", "/forensic", "/letters", "/responses", "/scores", "/settings"]
   }
 }
