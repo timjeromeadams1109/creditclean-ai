@@ -1,13 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand palette */
-  --cc-primary: #4F46E5;
-  --cc-primary-light: #6366F1;
-  --cc-primary-dark: #4338CA;
+  /* Brand palette — teal→emerald gradient (Miestro-inspired financial trust) */
+  --cc-primary: #0D9488;
+  --cc-primary-light: #14B8A6;
+  --cc-primary-dark: #0F766E;
+  --cc-accent: #10B981;
+  --cc-accent-light: #34D399;
   --cc-success: #10B981;
   --cc-warning: #F59E0B;
   --cc-danger: #F43F5E;
+
+  /* Gradient stops */
+  --cc-gradient-from: #0D9488;
+  --cc-gradient-to: #10B981;
 
   /* Bureau brand colors */
   --cc-equifax: #E11D48;
@@ -16,15 +22,15 @@
 
   /* Surface */
   --background: #FAFAF9;
-  --foreground: #1C1917;
+  --foreground: #131F1E;
   --card: #FFFFFF;
-  --border: #E7E5E4;
-  --muted: #78716C;
+  --border: #E5E7EB;
+  --muted: #6B7280;
 
   /* Sidebar */
-  --sidebar-bg: #18181B;
-  --sidebar-border: #27272A;
-  --sidebar-text: #A1A1AA;
+  --sidebar-bg: #111827;
+  --sidebar-border: #1F2937;
+  --sidebar-text: #9CA3AF;
   --sidebar-text-active: #FAFAFA;
 }
 
@@ -60,7 +66,7 @@ body {
 
 /* Selection color */
 ::selection {
-  background-color: #4F46E540;
+  background-color: #0D948840;
   color: inherit;
 }
 
@@ -68,6 +74,53 @@ body {
 *:focus-visible {
   outline: 2px solid var(--cc-primary);
   outline-offset: 2px;
+}
+
+/* Slider styling for calculator */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--cc-gradient-from), var(--cc-gradient-to));
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--cc-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--cc-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Testimonial carousel */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
 }
 
 /* Scrollbar styling */
