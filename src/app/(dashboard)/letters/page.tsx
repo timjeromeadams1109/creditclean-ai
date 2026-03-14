@@ -13,6 +13,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import LetterDownloadDisclaimer from "@/components/shared/LetterDownloadDisclaimer";
 import { DisputeStrategy } from "@/lib/disputes/types";
 
 type LetterStatus = "draft" | "final" | "sent";
@@ -82,6 +83,7 @@ export default function LettersPage() {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [pendingDownload, setPendingDownload] = useState<LetterRow | null>(null);
 
   const fetchLetters = useCallback(async () => {
     try {
@@ -104,7 +106,11 @@ export default function LettersPage() {
     fetchLetters();
   }, [fetchLetters]);
 
-  const handleDownload = async (letter: LetterRow) => {
+  const requestDownload = (letter: LetterRow) => {
+    setPendingDownload(letter);
+  };
+
+  const executeDownload = async (letter: LetterRow) => {
     setDownloadingId(letter.id);
     try {
       const res = await fetch(`/api/pdf/letter/${letter.id}`);
@@ -249,7 +255,7 @@ export default function LettersPage() {
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDownload(letter)}
+                      onClick={() => requestDownload(letter)}
                       disabled={downloadingId === letter.id}
                       className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
                       title="Download PDF"
@@ -329,7 +335,7 @@ export default function LettersPage() {
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button
-                  onClick={() => handleDownload(previewLetter)}
+                  onClick={() => requestDownload(previewLetter)}
                   disabled={downloadingId === previewLetter.id}
                   className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
@@ -351,6 +357,19 @@ export default function LettersPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Download disclaimer modal */}
+      <LetterDownloadDisclaimer
+        open={!!pendingDownload}
+        onClose={() => setPendingDownload(null)}
+        onProceed={() => {
+          if (pendingDownload) {
+            executeDownload(pendingDownload);
+            setPendingDownload(null);
+          }
+        }}
+        documentType="letter"
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   Search,
   ChevronRight,
 } from "lucide-react";
+import LegalFooter from "@/components/shared/LegalFooter";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -224,6 +225,9 @@ export default function DashboardLayout({
 
         {/* Page content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+
+        {/* Site-wide legal footer */}
+        <LegalFooter />
       </div>
     </div>
   );

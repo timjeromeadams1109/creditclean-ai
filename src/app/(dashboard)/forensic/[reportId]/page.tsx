@@ -25,6 +25,7 @@ import type {
   ForensicFinding,
   Recommendation,
 } from "@/lib/forensic/types";
+import LetterDownloadDisclaimer from "@/components/shared/LetterDownloadDisclaimer";
 import { DisputeStrategy } from "@/lib/disputes/types";
 
 const riskColors: Record<string, string> = {
@@ -88,6 +89,8 @@ export default function ForensicReportPage() {
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [downloadingAllLetters, setDownloadingAllLetters] = useState(false);
   const [generatingLetterId, setGeneratingLetterId] = useState<string | null>(null);
+  const [disclaimerType, setDisclaimerType] = useState<"letter" | "attorney-package" | "forensic-report" | null>(null);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     async function fetchReport() {
@@ -273,7 +276,10 @@ export default function ForensicReportPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleDownloadReportPDF}
+            onClick={() => {
+              setDisclaimerType("forensic-report");
+              setPendingAction(() => handleDownloadReportPDF);
+            }}
             disabled={downloadingReport}
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
@@ -281,7 +287,10 @@ export default function ForensicReportPage() {
             Full Report (PDF)
           </button>
           <button
-            onClick={handleDownloadAllLetters}
+            onClick={() => {
+              setDisclaimerType("letter");
+              setPendingAction(() => handleDownloadAllLetters);
+            }}
             disabled={downloadingAllLetters}
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
@@ -651,6 +660,21 @@ export default function ForensicReportPage() {
           )}
         </button>
       </motion.div>
+
+      {/* Download disclaimer modal */}
+      <LetterDownloadDisclaimer
+        open={!!disclaimerType}
+        onClose={() => {
+          setDisclaimerType(null);
+          setPendingAction(null);
+        }}
+        onProceed={() => {
+          if (pendingAction) pendingAction();
+          setDisclaimerType(null);
+          setPendingAction(null);
+        }}
+        documentType={disclaimerType || "letter"}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Shield, User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2, Scale } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,6 +20,11 @@ export default function SignUpPage() {
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy.");
       return;
     }
 
@@ -143,8 +149,30 @@ export default function SignUpPage() {
               {!loading && <ArrowRight className="h-4 w-4" />}
             </button>
 
+            {/* Terms checkbox */}
+            <label className="mt-5 flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="font-medium text-teal-600 underline hover:text-teal-700 dark:text-teal-400">
+                  Terms of Service
+                </Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" className="font-medium text-teal-600 underline hover:text-teal-700 dark:text-teal-400">
+                  Privacy Policy
+                </Link>
+                . I understand CreditClean AI is not a law firm and does not provide
+                legal advice.
+              </span>
+            </label>
+
             {/* Benefits */}
-            <div className="mt-6 space-y-2">
+            <div className="mt-5 space-y-2">
               {[
                 "Track items across all 3 bureaus",
                 "1 free dispute letter per month",
@@ -155,6 +183,18 @@ export default function SignUpPage() {
                   {benefit}
                 </div>
               ))}
+            </div>
+
+            {/* Free right notice */}
+            <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="flex items-start gap-2">
+                <Scale className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+                  You have the right to dispute inaccurate information on your credit
+                  report directly with the credit bureaus at no cost. CreditClean AI
+                  provides self-help tools — paid plans are optional.
+                </p>
+              </div>
             </div>
           </div>
         </form>
@@ -167,10 +207,10 @@ export default function SignUpPage() {
         </p>
 
         <p className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
-          By creating an account, you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-teal-600">Terms</Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="underline hover:text-teal-600">Privacy Policy</Link>.
+          <Link href="/disclaimer" className="underline hover:text-teal-600 dark:hover:text-teal-400">Disclaimer</Link>{" | "}
+          <Link href="/refund-policy" className="underline hover:text-teal-600 dark:hover:text-teal-400">Refund Policy</Link>{" | "}
+          <Link href="/terms" className="underline hover:text-teal-600 dark:hover:text-teal-400">Terms</Link>{" | "}
+          <Link href="/privacy" className="underline hover:text-teal-600 dark:hover:text-teal-400">Privacy</Link>
         </p>
 
         <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-500">

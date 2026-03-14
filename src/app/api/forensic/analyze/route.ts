@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { analyzeFullReport, parseManualEntry } from "@/lib/forensic";
+import { checkUsageLimit } from "@/lib/usage-limits";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -11,6 +13,20 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = (session.user as Record<string, unknown>).id as string;
+
+  // Rate limit
+  const rl = checkRateLimit(userId, "generate");
+  if (!rl.allowed) return rateLimitResponse(rl);
+
+  // Usage limit
+  const usage = await checkUsageLimit(userId, "forensic_report");
+  if (!usage.allowed) {
+    return NextResponse.json(
+      { error: usage.reason, limit: usage.limit, used: usage.used, tier: usage.tier },
+      { status: 403 }
+    );
+  }
+
   const supabase = getServiceSupabase();
 
   try {

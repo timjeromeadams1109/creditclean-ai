@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { generateLetterPDF } from "@/lib/pdf/generate";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { LetterPDFProps } from "@/lib/pdf/letter-pdf";
 
 export async function GET(
@@ -15,6 +16,11 @@ export async function GET(
   }
 
   const userId = (session.user as Record<string, unknown>).id as string;
+
+  // Rate limit
+  const rl = checkRateLimit(userId, "pdf");
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   const { roundId } = await params;
   const supabase = getServiceSupabase();
 

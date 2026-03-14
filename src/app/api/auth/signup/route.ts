@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { isDisposableEmail } from "@/lib/disposable-emails";
+import { sendNotification } from "@/lib/email";
+import { welcomeEmail } from "@/lib/email-templates";
 
 export async function POST(req: NextRequest) {
+  // Rate limit by IP to prevent brute-force signups
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = checkRateLimit(ip, "auth");
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     const { name, email, password } = await req.json();
 
@@ -15,6 +24,14 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Block disposable/temporary email addresses
+    if (isDisposableEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: "Please use a permanent email address. Temporary/disposable emails are not accepted." },
+        { status: 400 }
+      );
+    }
 
     const supabase = getServiceSupabase();
 
@@ -42,6 +59,10 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       return NextResponse.json({ error: "Failed to create account. Please try again." }, { status: 500 });
     }
+
+    // Send welcome email (async — don't block signup)
+    const welcome = welcomeEmail(name.trim().split(" ")[0] || "there");
+    sendNotification([normalizedEmail], welcome.subject, welcome.html).catch(() => {});
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch {

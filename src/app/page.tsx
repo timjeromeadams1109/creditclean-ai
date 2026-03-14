@@ -1066,6 +1066,21 @@ export default function HomePage() {
             purposes. Consult a qualified attorney for legal advice specific to
             your situation.
           </p>
+          <p className="mt-3 text-center text-xs leading-relaxed text-zinc-400 dark:text-zinc-500">
+            <strong className="text-zinc-500 dark:text-zinc-400">Your rights:</strong>{" "}
+            You have the right to dispute inaccurate information on your credit
+            report directly with credit bureaus at no cost. Under the Credit Repair
+            Organizations Act (CROA), 15 U.S.C. &sect;1679 et seq., you may cancel
+            any credit repair contract within 3 business days. CreditClean AI is not
+            registered as a credit repair organization in any state — this service
+            provides self-help educational tools only.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+            <span>File a complaint:</span>
+            <a href="https://www.consumerfinance.gov/complaint/" target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">CFPB</a>
+            <a href="https://reportfraud.ftc.gov/" target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">FTC</a>
+            <a href="https://www.naag.org/find-my-ag/" target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">State Attorney General</a>
+          </div>
         </div>
       </footer>
     </div>
