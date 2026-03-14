@@ -157,6 +157,105 @@ Even at 2,000 users ($58k/m revenue), total costs would be ~$230/m. **Margins st
 - Upgrade prompt when they hit limits (already built)
 - **Cost: $0**
 
+### Social Ads Strategy
+
+#### Facebook/Instagram Ads ($150-300/month)
+- **Target audience**: 25-55, interested in credit repair, personal finance, home buying, auto loans
+- **Lookalike audiences**: Upload email list of paying users → Meta builds 1% lookalike
+- **Ad types that convert for credit repair:**
+  1. **Problem-agitate-solve carousel**: "Your credit score is costing you $X/year → Here's why → Fix it for $29/mo"
+  2. **Before/after testimonial**: Score improvement screenshots (with permission)
+  3. **Free tool hook**: "Run a free forensic analysis on your credit report — find violations bureaus hope you never notice"
+  4. **Retargeting**: Show ads to free users who haven't upgraded (pixel on signup page)
+- **Budget split**: 60% prospecting, 40% retargeting
+- **Target CPA**: $25-35 (1-month payback at $29/m)
+- **Cost: $150-300/m**
+
+#### TikTok Ads ($100-200/month)
+- **Target**: 22-40, personal finance interest
+- **Creative format**: UGC-style "day in my life" cleaning credit + screen recordings
+- **Spark Ads**: Boost your best-performing organic TikToks as ads (cheapest CPA)
+- **Hook examples**:
+  - "I found $12,000 in violations on my credit report in 30 seconds"
+  - "3 things your credit bureau doesn't want you to know"
+  - "I got 4 negative items removed without paying a credit repair company"
+- **Cost: $100-200/m**
+
+#### Reddit Ads ($50-100/month)
+- **Subreddits**: r/CRedit, r/personalfinance, r/firsttimehomebuyer, r/povertyfinance
+- **Ad format**: Promoted posts that look like genuine advice (not salesy)
+- **Example**: "Free tool: I built an AI that checks your credit report for FCRA violations — runs in 30 seconds"
+- **Cost: $50-100/m** (Reddit ads are very cheap, often $0.50-2 CPC)
+
+### Powerful Low/No-Cost Marketing
+
+#### Credit Repair Community Building ($0)
+- **Facebook Groups**: Create "Credit Repair DIY" group, post daily tips, never hard-sell
+- **Target**: 10,000 members in 6 months — each post reaches 30-50% of members
+- **Strategy**: Be the expert, link to free tool when someone asks for help
+- **Multiplier**: Members invite friends with credit problems (viral loop)
+
+#### Twitter/X Thread Strategy ($0)
+- **Weekly threads**: "How to dispute [specific item type] — step by step"
+- **Quote tweet** credit bureau news with your analysis
+- **Engage with**: credit repair influencers, personal finance accounts
+- **Hashtags**: #CreditRepair #FCRA #CreditScore #DebtFree
+- **Target**: Build to 5K followers in 6 months
+
+#### Quora Answers ($0, High Intent)
+- Answer questions about credit repair, dispute processes, FCRA rights
+- Quora answers rank on Google — long-term SEO value
+- Link to free forensic tool when relevant
+- **Best questions to answer**: "How do I dispute a collection on my credit report?"
+- **Cost: $0, Time: 15 min/day, 3-5 answers**
+
+#### Local Credit Repair Workshops ($0)
+- Partner with local libraries, community centers, churches
+- Free 30-minute "Know Your Credit Rights" presentation
+- Hand out cards with free account signup link
+- **Target**: 1 workshop/month, 15-30 attendees each
+- **Conversion**: 30-40% signup rate at live events (high trust)
+
+#### Podcast Guesting ($0)
+- Pitch yourself to personal finance podcasts as a credit repair expert
+- Topics: "FCRA violations bureaus don't tell you about", "How to dispute like a lawyer"
+- Even small podcasts (1K-5K listeners) drive high-intent signups
+- Use PodcastGuests.com or MatchMaker.fm to find shows
+- **Target**: 2 podcast appearances/month
+
+#### Micro-Influencer Partnerships ($0-50/month)
+- Find credit repair TikTokers/YouTubers with 1K-10K followers
+- Offer free Pro accounts + affiliate commission (30% recurring)
+- They create content, you get users — zero upfront cost
+- Use affiliate link tracking to measure each creator
+- **Cost: $0 upfront, 30% commission on conversions**
+
+#### Strategic Content Repurposing ($0)
+- Every blog post → 3 Twitter threads → 1 YouTube Short → 1 TikTok → 5 Reddit comments
+- Every podcast appearance → audiogram clips → social posts
+- Every user success story → case study → testimonial ad → social proof
+- Use Canva (free tier) for all graphics
+- **1 piece of content = 10+ distribution points**
+
+#### "Credit Score Calculator" Viral Tool ($0)
+- Build a simple free page: "See how much your credit score is costing you"
+- Input: score, loan type (mortgage/auto/personal) → output: interest rate difference, total cost
+- Example: "A 620 vs 720 score costs you $47,000 more on a $250K mortgage"
+- Shareable results → organic social spread
+- CTA: "Fix your score — run a free forensic analysis"
+
+#### Church/Community Partnerships ($0)
+- Offer free financial literacy workshops at churches
+- Credit repair is a real need in many communities
+- Position as ministry/service, not sales
+- Provide free accounts to attendees
+- Word-of-mouth from community trust is the strongest acquisition channel
+
+#### Email Signature Marketing ($0)
+- Add to your personal email signature: "Struggling with credit? Free AI forensic analysis → [link]"
+- Every email you send becomes a marketing touchpoint
+- Ask team/friends to add it too
+
 #### Month 6-12: Scale (Target: 362 users)
 
 **SEO Compounds**
@@ -228,12 +327,17 @@ Credit repair has natural churn — users leave when their credit is clean. Plan
 | Resend | -$20 |
 | Domain/DNS | -$2 |
 | Google Ads | -$300 |
+| Facebook/Instagram Ads | -$200 |
+| TikTok Ads | -$150 |
+| Reddit Ads | -$75 |
 | Affiliate platform | -$49 |
 | Affiliate commissions (est. 20% of users) | -$631 |
-| **Total expenses** | **-$1,460** |
-| **Net profit** | **$9,038** |
+| **Total expenses** | **-$1,885** |
+| **Net profit** | **$8,613** |
 
-To clear a clean **$10,000/m** accounting for marketing spend and affiliate commissions, you need **~400 users** at $29/m.
+To clear a clean **$10,000/m** accounting for all marketing spend and affiliate commissions, you need **~420 users** at $29/m.
+
+**Note**: Most of the low/no-cost channels (Reddit organic, Facebook groups, Quora, workshops, podcasts, Twitter threads) cost $0 and can drive 50-100 signups/month alone. Social ads are optional accelerators — you can hit $10K/m with just organic if you're patient.
 
 ---
 
