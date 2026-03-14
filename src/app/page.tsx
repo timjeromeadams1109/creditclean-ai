@@ -1006,6 +1006,7 @@ export default function HomePage() {
                   { label: "Terms of Service", href: "/terms" },
                   { label: "Privacy Policy", href: "/privacy" },
                   { label: "Disclaimer", href: "/disclaimer" },
+                  { label: "Refund Policy", href: "/refund-policy" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} className="text-sm text-zinc-500 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400">

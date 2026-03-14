@@ -62,6 +62,12 @@ export default function LegalLayout({
               >
                 Disclaimer
               </Link>
+              <Link
+                href="/refund-policy"
+                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-200"
+              >
+                Refund Policy
+              </Link>
             </nav>
             <p className="text-xs text-zinc-400 dark:text-zinc-500">
               Last updated: March 11, 2026

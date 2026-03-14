@@ -35,7 +35,8 @@ export default function TermsOfServicePage() {
           <li><a href="#indemnification" className="hover:underline">Indemnification</a></li>
           <li><a href="#disputes" className="hover:underline">Dispute Resolution</a></li>
           <li><a href="#changes" className="hover:underline">Changes to Terms</a></li>
-          <li><a href="#governing-law" className="hover:underline">Governing Law</a></li>
+          <li><a href="#refund" className="hover:underline">Refund &amp; Cancellation Policy</a></li>
+          <li><a href="#governing-law" className="hover:underline">Governing Law &amp; Multi-State Compliance</a></li>
           <li><a href="#contact" className="hover:underline">Contact</a></li>
         </ol>
       </nav>
@@ -274,24 +275,62 @@ export default function TermsOfServicePage() {
           </p>
         </section>
 
-        {/* 13. Governing Law */}
+        {/* 13. Refund & Cancellation */}
+        <section id="refund">
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            13. Refund &amp; Cancellation Policy
+          </h2>
+          <p className="mt-3">
+            Our complete Refund &amp; Cancellation Policy, including your CROA right
+            to cancel within three (3) business days and state-specific consumer
+            protections, is set forth in our{" "}
+            <a
+              href="/refund-policy"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Refund &amp; Cancellation Policy
+            </a>
+            , which is incorporated by reference into these Terms.
+          </p>
+        </section>
+
+        {/* 14. Governing Law */}
         <section id="governing-law">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            13. Governing Law
+            14. Governing Law &amp; Multi-State Compliance
           </h2>
           <p className="mt-3">
             These Terms shall be governed by and construed in accordance with the
             laws of the State of California, without regard to its conflict of law
-            provisions. Any legal action or proceeding not subject to arbitration
-            shall be brought exclusively in the state or federal courts located in
-            California.
+            provisions. However, where applicable federal law (including CROA, FCRA,
+            FDCPA) or the consumer protection laws of the state in which you reside
+            provide greater protections than California law, those protections apply
+            to you in addition to these Terms.
+          </p>
+          <p className="mt-3">
+            CreditClean AI operates in compliance with all applicable state credit
+            repair organization laws, including but not limited to: the California
+            Credit Services Act (Cal. Civ. Code &sect;1789.10 et seq.), the Texas
+            Credit Services Organizations Act (Tex. Fin. Code &sect;393 et seq.),
+            the New York Credit Repair Services Act (N.Y. Gen. Bus. Law &sect;458-a
+            et seq.), the Florida Credit Repair Services Act (Fla. Stat. &sect;817.7001
+            et seq.), the Georgia Fair Business Practices Act (Ga. Code &sect;16-9-59
+            et seq.), and the Illinois Credit Services Organizations Act (815 ILCS
+            605/1 et seq.). If your state has a credit repair organization statute
+            not listed here, CreditClean AI will comply with it.
+          </p>
+          <p className="mt-3">
+            Any legal action or proceeding not subject to arbitration shall be
+            brought in the state or federal courts located in California, except
+            where your state law prohibits such venue restrictions for consumer
+            protection claims, in which case you may bring suit in your home state.
           </p>
         </section>
 
-        {/* 14. Contact */}
+        {/* 15. Contact */}
         <section id="contact">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            14. Contact
+            15. Contact
           </h2>
           <p className="mt-3">
             If you have any questions about these Terms of Service, please contact

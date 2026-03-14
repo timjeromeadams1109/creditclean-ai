@@ -54,8 +54,7 @@ function fullAddress(user: UserProfile): string {
 }
 
 function letterHeader(user: UserProfile, recipientName: string, recipientAddress: string): string {
-  return `CreditClean Legal Advocacy
-Consumer Protection Division
+  return `CreditClean AI — Consumer Advocacy Division
 
 ${formatDate()}
 
@@ -75,8 +74,7 @@ function signatureBlock(user: UserProfile): string {
 
 Respectfully submitted,
 
-CreditClean Legal Advocacy
-Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division
 On behalf of ${fullName(user)}
 
 Client Address: ${fullAddress(user)}
@@ -564,8 +562,7 @@ export function generateGoodwillLetter(
   const creditorName = creditItem.creditorName;
   const creditorAddress = creditItem.collectorAddress ?? "CREDITOR ADDRESS ON FILE";
 
-  const content = `CreditClean Legal Advocacy
-Consumer Protection Division
+  const content = `CreditClean AI — Consumer Advocacy Division
 
 ${formatDate()}
 
@@ -603,8 +600,7 @@ Thank you for your consideration.
 
 Respectfully,
 
-CreditClean Legal Advocacy
-Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division
 On behalf of ${fullName(userProfile)}
 
 Client Contact: ${userProfile.phone ?? "ON FILE"} | ${userProfile.email ?? "ON FILE"}`;
@@ -657,7 +653,7 @@ SUBMITTED ON BEHALF OF REPRESENTED CONSUMER
 Date: ${formatDate()}
 
 SUBMITTED BY:
-CreditClean Legal Advocacy — Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division — Consumer Protection Division
 On behalf of ${fullName(userProfile)}
 
 COMPLAINANT INFORMATION:
@@ -713,8 +709,7 @@ Complete documentation — including all dispute letters, certified mail receipt
 
 Respectfully submitted,
 
-CreditClean Legal Advocacy
-Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division
 On behalf of ${fullName(userProfile)}`;
 
   return {
@@ -765,7 +760,7 @@ TO: Office of the Attorney General, State of ${userProfile.address.state}
 Consumer Protection Division
 
 FROM:
-CreditClean Legal Advocacy — Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division — Consumer Protection Division
 On behalf of ${fullName(userProfile)}
 ${fullAddress(userProfile)}
 Date of Birth: ${userProfile.dob}
@@ -821,8 +816,7 @@ Complete documentation is enclosed, including all dispute correspondence, certif
 
 Respectfully submitted,
 
-CreditClean Legal Advocacy
-Consumer Protection Division
+CreditClean AI — Consumer Advocacy Division
 On behalf of ${fullName(userProfile)}
 Date: ${formatDate()}
 
