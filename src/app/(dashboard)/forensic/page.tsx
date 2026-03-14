@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Loader2,
   X,
+  ExternalLink,
 } from "lucide-react";
 
 type Bureau = "equifax" | "experian" | "transunion";
@@ -153,9 +154,41 @@ export default function ForensicPage() {
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Upload your credit report or manually enter items for deep forensic
-          analysis. We identify every violation, error, and disputeable item.
+          analysis. We check every item against 26 legal violation types.
         </p>
       </div>
+
+      {/* Get Your Free Report Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-800/50 dark:bg-blue-950/30"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <FileText className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+            <div>
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                Need your credit report?
+              </p>
+              <p className="mt-0.5 text-sm text-blue-700 dark:text-blue-300">
+                Get your free reports from all 3 bureaus at AnnualCreditReport.com — the only
+                federally authorized source. You&apos;re entitled to free weekly reports.
+              </p>
+            </div>
+          </div>
+          <a
+            href="https://www.annualcreditreport.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+          >
+            Get Free Reports
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </motion.div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Upload Section */}

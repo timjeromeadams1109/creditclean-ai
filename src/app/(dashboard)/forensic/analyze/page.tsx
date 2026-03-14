@@ -199,6 +199,18 @@ export default function ManualAnalyzePage() {
           Enter each item from your credit report. Add all items, then run the
           forensic analysis.
         </p>
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          Don&apos;t have your report yet?{" "}
+          <a
+            href="https://www.annualcreditreport.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-teal-600 underline underline-offset-2 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+          >
+            Get free reports from all 3 bureaus
+          </a>{" "}
+          — then enter items from each report below.
+        </p>
       </div>
 
       {/* Bureau + State selectors */}

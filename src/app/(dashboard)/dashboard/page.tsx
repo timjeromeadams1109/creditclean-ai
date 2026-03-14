@@ -12,6 +12,8 @@ import {
   ArrowRight,
   CalendarClock,
   Eye,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 
 // TODO: Replace with Supabase query — fetch user's latest scores per bureau
@@ -125,6 +127,15 @@ const statusStyles: Record<string, string> = {
 
 const quickActions = [
   {
+    label: "Get Free Credit Reports",
+    description: "From AnnualCreditReport.com",
+    href: "https://www.annualcreditreport.com",
+    icon: FileText,
+    iconBg: "bg-teal-100 dark:bg-teal-950",
+    iconColor: "text-teal-600 dark:text-teal-400",
+    external: true,
+  },
+  {
     label: "Run Forensic Analysis",
     description: "AI-powered credit report scan",
     href: "/forensic",
@@ -142,7 +153,7 @@ const quickActions = [
   },
   {
     label: "Generate Letter",
-    description: "Create a dispute letter with AI",
+    description: "Create a dispute letter",
     href: "/letters",
     icon: Mail,
     iconBg: "bg-emerald-100 dark:bg-emerald-950",
@@ -329,6 +340,39 @@ export default function DashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Get your free credit report */}
+      <motion.div
+        custom={3.5}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 p-5 dark:border-teal-800/40 dark:from-teal-950/30 dark:to-emerald-950/30"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <FileText className="mt-0.5 h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" />
+            <div>
+              <p className="text-[14px] font-semibold text-teal-900 dark:text-teal-100">
+                Get your free credit reports
+              </p>
+              <p className="mt-0.5 text-[13px] text-teal-700 dark:text-teal-300">
+                Pull your reports from all 3 bureaus at AnnualCreditReport.com — the
+                only federally authorized source. Free weekly reports are available.
+              </p>
+            </div>
+          </div>
+          <a
+            href="https://www.annualcreditreport.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110"
+          >
+            Get Free Reports
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </motion.div>
 
       {/* Progress section */}
       <motion.div
@@ -524,30 +568,38 @@ export default function DashboardPage() {
         <h2 className="mb-4 text-[15px] font-semibold text-stone-900 dark:text-zinc-100">
           Quick Actions
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => (
-            <Link
-              key={action.label}
-              href={action.href}
-              className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
-            >
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.iconBg}`}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {quickActions.map((action) => {
+            const isExternal = "external" in action && action.external;
+            const Component = isExternal ? "a" : Link;
+            const extraProps = isExternal
+              ? { target: "_blank", rel: "noopener noreferrer" }
+              : {};
+            return (
+              <Component
+                key={action.label}
+                href={action.href}
+                {...extraProps}
+                className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
               >
-                <action.icon className={`h-5 w-5 ${action.iconColor}`} />
-              </div>
-              <h3 className="mt-4 text-[14px] font-semibold text-stone-900 dark:text-zinc-100">
-                {action.label}
-              </h3>
-              <p className="mt-1 text-[12px] text-stone-500 dark:text-zinc-400 leading-relaxed">
-                {action.description}
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[12px] font-medium text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">
-                Get started
-                <ArrowRight className="h-3 w-3" />
-              </div>
-            </Link>
-          ))}
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.iconBg}`}
+                >
+                  <action.icon className={`h-5 w-5 ${action.iconColor}`} />
+                </div>
+                <h3 className="mt-4 text-[14px] font-semibold text-stone-900 dark:text-zinc-100">
+                  {action.label}
+                </h3>
+                <p className="mt-1 text-[12px] text-stone-500 dark:text-zinc-400 leading-relaxed">
+                  {action.description}
+                </p>
+                <div className="mt-3 flex items-center gap-1 text-[12px] font-medium text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">
+                  {isExternal ? "Open site" : "Get started"}
+                  {isExternal ? <ExternalLink className="h-3 w-3" /> : <ArrowRight className="h-3 w-3" />}
+                </div>
+              </Component>
+            );
+          })}
         </div>
       </motion.div>
     </div>
