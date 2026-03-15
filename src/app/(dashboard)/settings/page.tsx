@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Bell, Shield, CreditCard, LogOut, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import CROADisclosureModal from "@/components/shared/CROADisclosureModal";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justUpgraded = searchParams.get("upgraded") === "1";
@@ -316,5 +316,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-4xl animate-pulse"><div className="h-8 w-48 rounded bg-zinc-200 dark:bg-zinc-800" /></div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
