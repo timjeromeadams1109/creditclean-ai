@@ -232,6 +232,40 @@ export function cancellationEmail(
   };
 }
 
+// ─── Password Reset ───
+
+export function passwordResetEmail(name: string, resetUrl: string): { subject: string; html: string } {
+  return {
+    subject: "Reset your CreditClean AI password",
+    html: layout(`
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Reset your password, ${name}</h1>
+      <p style="color:#52525b;font-size:14px;line-height:1.7;margin:0 0 20px;">
+        We received a request to reset your password. Click the button below to choose a new one.
+      </p>
+
+      <div style="margin:0 0 20px;text-align:center;">
+        <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,${BRAND.color},#10b981);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;">
+          Reset Password &rarr;
+        </a>
+      </div>
+
+      <div style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:16px;margin:0 0 20px;">
+        <p style="margin:0;font-size:12px;color:#92400e;line-height:1.6;">
+          This link expires in <strong>1 hour</strong>. If you didn&rsquo;t request a password reset,
+          you can safely ignore this email &mdash; your password will remain unchanged.
+        </p>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #f4f4f5;margin:24px 0;">
+
+      <p style="font-size:12px;color:#a1a1aa;line-height:1.6;margin:0;">
+        If the button doesn&rsquo;t work, copy and paste this link into your browser:<br/>
+        <a href="${resetUrl}" style="color:#0d9488;word-break:break-all;">${resetUrl}</a>
+      </p>
+    `),
+  };
+}
+
 // ─── CROA 3-Day Cancellation Window Reminder (Day 2 after purchase) ───
 
 export function croaCancellationReminderEmail(name: string, purchaseDate: string): { subject: string; html: string } {

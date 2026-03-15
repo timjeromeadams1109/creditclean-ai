@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -14,105 +15,43 @@ import {
   Eye,
   ExternalLink,
   FileText,
+  Loader2,
 } from "lucide-react";
 
-// TODO: Replace with Supabase query — fetch user's latest scores per bureau
-const bureauScores = [
-  {
-    bureau: "Equifax",
-    score: 612,
-    change: +18,
-    trend: "up" as const,
-    color: "#E11D48",
-    label: "EQ",
-  },
-  {
-    bureau: "Experian",
-    score: 598,
-    change: +12,
-    trend: "up" as const,
-    color: "#2563EB",
-    label: "EX",
-  },
-  {
-    bureau: "TransUnion",
-    score: 605,
-    change: -3,
-    trend: "down" as const,
-    color: "#059669",
-    label: "TU",
-  },
-];
+interface BureauScore {
+  bureau: string;
+  score: number;
+  change: number;
+  trend: "up" | "down";
+  color: string;
+  label: string;
+}
 
-// TODO: Replace with Supabase query — aggregate counts from credit_items
-const stats = {
-  activeDisputes: 7,
-  itemsTracked: 14,
-  itemsResolved: 5,
-  itemsDisputing: 4,
-  itemsPending: 5,
-  targetDate: "August 2026",
-  targetDaysRemaining: 152,
+interface DashboardStats {
+  activeDisputes: number;
+  itemsTracked: number;
+  itemsResolved: number;
+  itemsDisputing: number;
+  itemsPending: number;
+}
+
+interface ActiveDispute {
+  id: string;
+  account: string;
+  bureau: string;
+  bureauColor: string;
+  bureauLabel: string;
+  round: number;
+  totalRounds: number;
+  status: "Draft" | "Sent" | "Awaiting" | "Responded";
+  daysRemaining: number;
+}
+
+const BUREAU_META: Record<string, { color: string; label: string; bgClass: string }> = {
+  equifax: { color: "#E11D48", label: "EQ", bgClass: "bg-rose-500" },
+  experian: { color: "#2563EB", label: "EX", bgClass: "bg-blue-600" },
+  transunion: { color: "#059669", label: "TU", bgClass: "bg-emerald-600" },
 };
-
-// TODO: Replace with Supabase query — fetch active disputes with round info
-const activeDisputes = [
-  {
-    id: "1",
-    account: "Capital One — Collection",
-    bureau: "Equifax",
-    bureauColor: "bg-rose-500",
-    bureauLabel: "EQ",
-    round: 2,
-    totalRounds: 5,
-    status: "Sent" as const,
-    daysRemaining: 22,
-  },
-  {
-    id: "2",
-    account: "Medical Debt — $1,240",
-    bureau: "Experian",
-    bureauColor: "bg-blue-600",
-    bureauLabel: "EX",
-    round: 1,
-    totalRounds: 5,
-    status: "Awaiting" as const,
-    daysRemaining: 15,
-  },
-  {
-    id: "3",
-    account: "Midland Credit — Collection",
-    bureau: "Equifax",
-    bureauColor: "bg-rose-500",
-    bureauLabel: "EQ",
-    round: 2,
-    totalRounds: 5,
-    status: "Draft" as const,
-    daysRemaining: 30,
-  },
-  {
-    id: "4",
-    account: "Student Loan — Late Payment",
-    bureau: "Experian",
-    bureauColor: "bg-blue-600",
-    bureauLabel: "EX",
-    round: 1,
-    totalRounds: 5,
-    status: "Responded" as const,
-    daysRemaining: 0,
-  },
-  {
-    id: "5",
-    account: "Discover — Charge Off",
-    bureau: "TransUnion",
-    bureauColor: "bg-emerald-600",
-    bureauLabel: "TU",
-    round: 3,
-    totalRounds: 5,
-    status: "Sent" as const,
-    daysRemaining: 18,
-  },
-];
 
 const statusStyles: Record<string, string> = {
   Draft:
@@ -256,9 +195,63 @@ function ProgressRing({
 }
 
 export default function DashboardPage() {
-  const resolvedPct = Math.round(
-    (stats.itemsResolved / stats.itemsTracked) * 100
-  );
+  const [bureauScores, setBureauScores] = useState<BureauScore[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    activeDisputes: 0, itemsTracked: 0, itemsResolved: 0, itemsDisputing: 0, itemsPending: 0,
+  });
+  const [activeDisputes, setActiveDisputes] = useState<ActiveDispute[]>([]);
+  const [userName, setUserName] = useState("there");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (!res.ok) return;
+        const data = await res.json();
+        setUserName(data.userName || "there");
+        setStats(data.stats);
+        setActiveDisputes(
+          (data.activeDisputes || []).map((d: Record<string, unknown>) => {
+            const bureau = (d.bureau as string || "equifax").toLowerCase();
+            const meta = BUREAU_META[bureau] || BUREAU_META.equifax;
+            return { ...d, bureauColor: meta.bgClass, bureauLabel: meta.label };
+          })
+        );
+        setBureauScores(
+          (data.bureauScores || []).map((s: Record<string, unknown>) => {
+            const bureau = (s.bureau as string || "equifax").toLowerCase();
+            const meta = BUREAU_META[bureau] || BUREAU_META.equifax;
+            return {
+              bureau: bureau.charAt(0).toUpperCase() + bureau.slice(1),
+              score: s.score as number,
+              change: s.change as number,
+              trend: s.trend as "up" | "down",
+              color: meta.color,
+              label: meta.label,
+            };
+          })
+        );
+      } catch {
+        // Silently handle — dashboard shows empty state
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  const resolvedPct = stats.itemsTracked > 0
+    ? Math.round((stats.itemsResolved / stats.itemsTracked) * 100)
+    : 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -270,7 +263,7 @@ export default function DashboardPage() {
         variants={fadeUp}
       >
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900 dark:text-zinc-50">
-          {getGreeting()}, Tim
+          {getGreeting()}, {userName}
         </h1>
         <p className="mt-1 text-[14px] text-stone-500 dark:text-zinc-400">
           {getFormattedDate()} &mdash; Here&apos;s your credit repair progress
@@ -279,6 +272,20 @@ export default function DashboardPage() {
 
       {/* Bureau score cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {bureauScores.length === 0 && (
+          <Link
+            href="/scores"
+            className="col-span-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/50 p-8 text-center hover:border-teal-300 hover:bg-teal-50/30 transition-colors dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-teal-700"
+          >
+            <TrendingUp className="mx-auto h-8 w-8 text-stone-300 dark:text-zinc-600" />
+            <p className="mt-3 text-[14px] font-medium text-stone-600 dark:text-zinc-400">
+              No credit scores tracked yet
+            </p>
+            <p className="mt-1 text-[13px] text-stone-400 dark:text-zinc-500">
+              Add your scores from each bureau to track your progress
+            </p>
+          </Link>
+        )}
         {bureauScores.map((b, i) => (
           <motion.div
             key={b.bureau}
@@ -398,7 +405,7 @@ export default function DashboardPage() {
                 <div className="mt-1 flex items-center gap-2 text-[13px] text-stone-500 dark:text-zinc-400">
                   <CalendarClock className="h-3.5 w-3.5" />
                   <span>
-                    {stats.targetDaysRemaining} days until {stats.targetDate}
+                    {stats.itemsTracked} items tracked &middot; {stats.itemsResolved} resolved
                   </span>
                 </div>
               </div>
@@ -496,6 +503,24 @@ export default function DashboardPage() {
           </div>
           {/* Table rows */}
           <div className="divide-y divide-stone-100 dark:divide-zinc-800">
+            {activeDisputes.length === 0 && (
+              <div className="px-5 py-10 text-center">
+                <Mail className="mx-auto h-8 w-8 text-stone-300 dark:text-zinc-600" />
+                <p className="mt-3 text-[14px] font-medium text-stone-500 dark:text-zinc-400">
+                  No active disputes yet
+                </p>
+                <p className="mt-1 text-[13px] text-stone-400 dark:text-zinc-500">
+                  Add a credit item and generate your first dispute letter
+                </p>
+                <Link
+                  href="/items/new"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:shadow-md hover:brightness-110 transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Credit Item
+                </Link>
+              </div>
+            )}
             {activeDisputes.map((d) => (
               <div
                 key={d.id}

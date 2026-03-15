@@ -25,8 +25,8 @@ export default function LegalFooter() {
           <Link href="/refund-policy" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
             Refund &amp; Cancellation
           </Link>
-          <a href="mailto:legal@creditclean.ai" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
-            legal@creditclean.ai
+          <a href="mailto:support@creditclean.ai" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+            support@creditclean.ai
           </a>
         </div>
 
