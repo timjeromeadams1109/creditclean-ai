@@ -19,6 +19,7 @@ import {
   getStatuteOfLimitations,
   type ParsedCreditItem,
 } from './report-parser';
+import { validateMetro2Compliance } from './metro2-validator';
 
 // ---------------------------------------------------------------------------
 // analyzeItem — run all forensic checks on a single credit report line item
@@ -559,6 +560,16 @@ export function analyzeItem(
       });
       legalBasis.push('FCBA §161');
     }
+  }
+
+  // =========================================================================
+  // METRO 2 FORMAT COMPLIANCE CHECKS
+  // =========================================================================
+
+  const metro2Violations = validateMetro2Compliance(item, reportDate, allItems);
+  for (const m2v of metro2Violations) {
+    violations.push(m2v);
+    legalBasis.push(`Metro 2 [${m2v.metro2RuleId}]`);
   }
 
   // =========================================================================

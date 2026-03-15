@@ -12,6 +12,13 @@ import {
   Bureau,
 } from "./types";
 import { LEGAL_CITATIONS, getStateCitations, getMedicalCitations } from "./legal-citations";
+import {
+  inferStatusCode,
+  getStatusDescription,
+  ACCOUNT_STATUS_CODES,
+} from "../forensic/metro2-reference";
+import { validateMetro2Compliance } from "../forensic/metro2-validator";
+import { parseManualEntry } from "../forensic/report-parser";
 
 // ─────────────────────────────────────────────────────────
 // Bureau Addresses
@@ -130,6 +137,75 @@ function stateAddendum(user: UserProfile): string {
   const citation = citations[0];
   return `
 Additionally, as a resident of ${user.address.state}, I am afforded protections under ${citation.lawName} (${citation.section}). ${citation.summary} Your failure to comply subjects you to liability under both federal and state law, including any enhanced damages available under state statute.
+`;
+}
+
+/**
+ * Generate Metro 2 Format compliance section for dispute letters.
+ * Runs Metro 2 validation against the credit item and produces letter-ready text
+ * citing specific CDIA Metro 2 fields and codes.
+ */
+function metro2ComplianceSection(item: CreditItem): string {
+  // Convert CreditItem to ParsedCreditItem for validation
+  const parsed = parseManualEntry({
+    accountName: item.creditorName,
+    accountNumber: item.accountNumber,
+    accountType: item.itemType === ItemType.COLLECTION || item.itemType === ItemType.MEDICAL_DEBT
+      ? 'collection'
+      : item.itemType === ItemType.LATE_PAYMENT
+        ? 'revolving'
+        : 'other',
+    currentStatus: item.status ?? '',
+    paymentStatus: item.status ?? '',
+    dateOpened: item.dateOpened ?? '',
+    dateReported: item.dateReported ?? '',
+    dateOfFirstDelinquency: '',
+    balance: item.balance ?? 0,
+    originalBalance: item.originalBalance,
+    isCollection: item.itemType === ItemType.COLLECTION || item.itemType === ItemType.MEDICAL_DEBT,
+    isMedical: item.isMedical ?? item.itemType === ItemType.MEDICAL_DEBT,
+    collectorName: item.collectorName,
+    originalCreditor: item.creditorName,
+    comments: item.remarks,
+  });
+
+  const violations = validateMetro2Compliance(parsed, new Date().toISOString().split('T')[0]);
+  if (violations.length === 0) return '';
+
+  const inferredCode = inferStatusCode(item.status ?? '');
+  const statusDesc = inferredCode ? getStatusDescription(inferredCode) : null;
+
+  const violationLines = violations.map((v, i) => {
+    const parts = [
+      `  ${i + 1}. ${v.violationType}`,
+      `     ${v.description}`,
+    ];
+    if (v.metro2Field) {
+      parts.push(`     Metro 2 Field: ${v.metro2Field}`);
+    }
+    if (v.expectedValue && v.actualValue) {
+      parts.push(`     Expected: ${v.expectedValue} | Reported: ${v.actualValue}`);
+    }
+    if (v.cdiaParagraph) {
+      parts.push(`     CDIA Reference: ${v.cdiaParagraph}`);
+    }
+    return parts.join('\n');
+  }).join('\n\n');
+
+  return `
+METRO 2 FORMAT COMPLIANCE ANALYSIS:
+
+The Consumer Data Industry Association (CDIA) Metro 2 Format is the standardized reporting format used by all data furnishers to report consumer credit data to the three national credit bureaus. Furnishers are contractually and legally obligated to comply with Metro 2 reporting standards. Under FCRA §623(a)(1) (15 U.S.C. §1681s-2(a)(1)), furnishers must report information that is accurate — and Metro 2 Format compliance is the industry-accepted measure of reporting accuracy.${inferredCode ? `
+
+The reported account status of "${item.status}" maps to Metro 2 Account Status Code ${inferredCode} (${statusDesc}). Analysis of the reported data against Metro 2 Format rules reveals the following violation(s):` : `
+
+Analysis of the reported data against Metro 2 Format rules reveals the following violation(s):`}
+
+${violationLines}
+
+These Metro 2 Format violations are not merely technical — they represent concrete failures to comply with the industry standard that defines "accuracy" under the FCRA. A furnisher that reports data inconsistent with Metro 2 Format rules cannot credibly claim the information is "accurate" for purposes of FCRA §623(a)(1). The CDIA Metro 2 Format Manual, which governs how every data field must be reported, is the authoritative reference for what constitutes accurate credit reporting in the United States.
+
+We demand that the furnisher correct all Metro 2 Format violations identified above and re-submit corrected data to all three national credit bureaus within thirty (30) days.
 `;
 }
 
@@ -271,7 +347,7 @@ ${creditItem.itemType === ItemType.LATE_PAYMENT ? `The late payment history repo
 ${creditItem.userNotes ? `Additional information from our client: ${creditItem.userNotes}\n` : ""}${caseAuthority("fcra_611")}
 
 ${anticipatedDefenses(creditItem, "fcra_611")}
-
+${metro2ComplianceSection(creditItem)}
 STATUTORY OBLIGATIONS — WE EXPECT STRICT COMPLIANCE:
 
 Under FCRA §611 (15 U.S.C. §1681i), upon receipt of this dispute, your agency is required to:
@@ -344,7 +420,7 @@ Under FCRA §609(a)(1) (15 U.S.C. §1681g), our client is entitled to full discl
 5. The business name, address, and telephone number of the entity that purportedly verified this information.
 
 If your agency cannot provide the method of verification, the conclusion is inescapable: the item is unverifiable. Under FCRA §611(a)(5)(A) (15 U.S.C. §1681i(a)(5)(A)), unverifiable information must be immediately deleted.
-
+${metro2ComplianceSection(creditItem)}
 ${caseAuthority("fcra_609")}
 
 NOTICE REGARDING FRIVOLOUS DISPUTE DETERMINATIONS:
@@ -422,7 +498,7 @@ We dispute this alleged debt in its entirety on behalf of our client. Under FDCP
 ${caseAuthority("fdcpa_809")}
 
 ${anticipatedDefenses(creditItem, "fdcpa_809")}
-
+${metro2ComplianceSection(creditItem)}
 CEASE ALL COLLECTION ACTIVITY — EFFECTIVE IMMEDIATELY:
 
 Under FDCPA §809(b), upon receipt of this written dispute, you are legally required to cease all collection activity until proper validation has been provided and mailed to our client. This includes, without limitation:
@@ -508,7 +584,7 @@ Additionally, under §623(a)(1), you are prohibited from furnishing information 
 ${caseAuthority("fcra_623")}
 
 ${anticipatedDefenses(creditItem, "fcra_623")}
-
+${metro2ComplianceSection(creditItem)}
 DOCUMENTS DEMANDED:
 
 We demand production of the following within thirty (30) days:
@@ -691,6 +767,7 @@ Based on the respondent's actions (or failures to act), we have identified the f
 
 ${violationsList || "- Failure to conduct a reasonable reinvestigation as required by FCRA §611 (15 U.S.C. §1681i)\n- Failure to provide method of verification as required by FCRA §609 (15 U.S.C. §1681g)"}
 
+${metro2ComplianceSection(creditItem)}
 These are not technical objections — they represent a pattern of willful disregard for the statutory obligations Congress imposed on CRAs to protect consumers. Federal courts have consistently held that a CRA's duty to reinvestigate is substantive, not procedural. See Cushman v. Trans Union Corp., 115 F.3d 220 (3d Cir. 1997); Henson v. CSC Credit Servs., 29 F.3d 280 (7th Cir. 1994).
 
 HARM TO CONSUMER:
@@ -931,6 +1008,7 @@ DOCUMENTED VIOLATIONS:
 
   ${violationsDetail || `Multiple violations of FCRA §611 (failure to conduct reasonable reinvestigation), §609 (failure to provide method of verification), and §607(b) (failure to maintain reasonable procedures). Detailed violation inventory available in litigation file.`}
 
+${metro2ComplianceSection(creditItem)}
 ${caseAuthority("intent_to_litigate")}
 
 DAMAGES EXPOSURE:
