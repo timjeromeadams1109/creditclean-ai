@@ -16,33 +16,31 @@ export async function GET(
   const { id } = await params;
   const supabase = getServiceSupabase();
 
-  // Fetch dispute round
-  const { data: round, error: roundError } = await supabase
-    .from("dispute_rounds")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", userId)
-    .single();
+  // Fetch round, letter, and responses in parallel
+  const [roundResult, letterResult, responsesResult] = await Promise.all([
+    supabase
+      .from("dispute_rounds")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single(),
+    supabase
+      .from("dispute_letters")
+      .select("*")
+      .eq("dispute_round_id", id)
+      .single(),
+    supabase
+      .from("dispute_responses")
+      .select("*")
+      .eq("dispute_round_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  if (roundError || !round) {
+  if (roundResult.error || !roundResult.data) {
     return NextResponse.json({ error: "Dispute round not found" }, { status: 404 });
   }
 
-  // Fetch associated letter
-  const { data: letter } = await supabase
-    .from("dispute_letters")
-    .select("*")
-    .eq("dispute_round_id", id)
-    .single();
-
-  // Fetch responses
-  const { data: responses } = await supabase
-    .from("dispute_responses")
-    .select("*")
-    .eq("dispute_round_id", id)
-    .order("created_at", { ascending: true });
-
-  return NextResponse.json({ round, letter, responses: responses ?? [] });
+  return NextResponse.json({ round: roundResult.data, letter: letterResult.data, responses: responsesResult.data ?? [] });
 }
 
 export async function PUT(

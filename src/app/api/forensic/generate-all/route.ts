@@ -71,56 +71,52 @@ export async function POST(req: NextRequest) {
       phone: profile?.phone || "",
     };
 
-    const generatedLetters: Array<{
-      action: Recommendation;
-      letterContent: string;
-      creditItemId: string;
-      disputeRoundId: string;
-    }> = [];
+    // Collect actions with their findings
+    const actionFindings = report.prioritizedActions
+      .map((action) => {
+        const finding = report.findings.find((f) =>
+          f.recommendations.some((r) => r.action === action.action)
+        );
+        return finding ? { action, finding } : null;
+      })
+      .filter(Boolean) as Array<{ action: Recommendation; finding: (typeof report.findings)[number] }>;
 
-    // Process each prioritized action
-    for (const action of report.prioritizedActions) {
-      // Find the corresponding finding
-      const finding = report.findings.find((f) =>
-        f.recommendations.some((r) => r.action === action.action)
-      );
+    if (actionFindings.length === 0) {
+      return NextResponse.json({ lettersGenerated: 0, letters: [] }, { status: 201 });
+    }
 
-      if (!finding) continue;
+    // Batch insert all credit items at once
+    const creditItemRows = actionFindings.map(({ finding }) => ({
+      user_id: userId,
+      bureau: finding.bureau as string,
+      item_type: mapItemType(finding.itemType),
+      creditor_name: finding.accountName,
+      account_number: finding.accountNumber.replace(/\*/g, ""),
+      balance: finding.reportedBalance || 0,
+      date_opened: finding.dateOpened || null,
+      date_reported: finding.dateReported || null,
+      status: finding.currentStatus,
+      remarks: finding.itemDescription,
+      is_medical: finding.itemType.toLowerCase().includes("medical"),
+      user_notes: `Auto-created from forensic report ${reportId}`,
+    }));
 
-      // Map method to DisputeStrategy
+    const { data: creditItems, error: itemsError } = await supabase
+      .from("credit_items")
+      .insert(creditItemRows)
+      .select("id");
+
+    if (itemsError || !creditItems) {
+      console.error("Failed to batch create credit items:", itemsError);
+      return NextResponse.json({ error: "Failed to create credit items." }, { status: 500 });
+    }
+
+    // Generate all letters (CPU-only, no I/O)
+    const lettersToInsert = actionFindings.map(({ action, finding }, i) => {
       const strategy = mapMethodToStrategy(action.method);
-
-      // Map item type
       const itemType = mapItemType(finding.itemType);
-
-      // Create credit_item in the database
-      const { data: creditItem, error: itemError } = await supabase
-        .from("credit_items")
-        .insert({
-          user_id: userId,
-          bureau: finding.bureau as string,
-          item_type: itemType,
-          creditor_name: finding.accountName,
-          account_number: finding.accountNumber.replace(/\*/g, ""),
-          balance: finding.reportedBalance || 0,
-          date_opened: finding.dateOpened || null,
-          date_reported: finding.dateReported || null,
-          status: finding.currentStatus,
-          remarks: finding.itemDescription,
-          is_medical: finding.itemType.toLowerCase().includes("medical"),
-          user_notes: `Auto-created from forensic report ${reportId}`,
-        })
-        .select("id")
-        .single();
-
-      if (itemError || !creditItem) {
-        console.error("Failed to create credit item:", itemError);
-        continue;
-      }
-
-      // Build CreditItem for letter generation
       const creditItemData: CreditItem = {
-        id: creditItem.id,
+        id: creditItems[i].id,
         bureau: finding.bureau as Bureau,
         itemType: itemType as ItemType,
         creditorName: finding.accountName,
@@ -132,39 +128,39 @@ export async function POST(req: NextRequest) {
         remarks: finding.itemDescription,
         isMedical: finding.itemType.toLowerCase().includes("medical"),
       };
-
-      // Generate the letter
       const letter = generateLetter(strategy, userProfile, creditItemData);
+      return { action, letter, creditItemId: creditItems[i].id, strategy };
+    });
 
-      // Create dispute_round in database
-      const { data: round, error: roundError } = await supabase
-        .from("dispute_rounds")
-        .insert({
-          credit_item_id: creditItem.id,
-          user_id: userId,
-          round_number: 1,
-          strategy: strategy,
-          letter_content: letter.content,
-          recipient_name: letter.recipientName,
-          recipient_address: letter.recipientAddress,
-          legal_basis: letter.legalBasis,
-          deadline_days: letter.deadlineDays,
-          status: "draft",
-        })
-        .select("id")
-        .single();
+    // Batch insert all dispute rounds at once
+    const roundRows = lettersToInsert.map(({ letter, creditItemId, strategy }) => ({
+      credit_item_id: creditItemId,
+      user_id: userId,
+      round_number: 1,
+      strategy,
+      letter_content: letter.content,
+      recipient_name: letter.recipientName,
+      recipient_address: letter.recipientAddress,
+      legal_basis: letter.legalBasis,
+      deadline_days: letter.deadlineDays,
+      status: "draft",
+    }));
 
-      if (roundError) {
-        console.error("Failed to create dispute round:", roundError);
-      }
+    const { data: rounds, error: roundsError } = await supabase
+      .from("dispute_rounds")
+      .insert(roundRows)
+      .select("id");
 
-      generatedLetters.push({
-        action,
-        letterContent: letter.content,
-        creditItemId: creditItem.id,
-        disputeRoundId: round?.id || "",
-      });
+    if (roundsError) {
+      console.error("Failed to batch create dispute rounds:", roundsError);
     }
+
+    const generatedLetters = lettersToInsert.map(({ action, letter, creditItemId }, i) => ({
+      action,
+      letterContent: letter.content,
+      creditItemId,
+      disputeRoundId: rounds?.[i]?.id || "",
+    }));
 
     return NextResponse.json(
       {

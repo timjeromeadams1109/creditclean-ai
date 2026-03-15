@@ -28,7 +28,7 @@ export async function POST(
   const supabase = getServiceSupabase();
 
   try {
-    // Fetch the response record
+    // Fetch the response record first (need IDs for subsequent queries)
     const { data: responseRecord, error: respError } = await supabase
       .from("dispute_responses")
       .select("*")
@@ -40,23 +40,26 @@ export async function POST(
       return NextResponse.json({ error: "Response not found" }, { status: 404 });
     }
 
-    // Fetch the dispute round
-    const { data: roundData } = await supabase
-      .from("dispute_rounds")
-      .select("*")
-      .eq("id", responseRecord.dispute_round_id)
-      .single();
+    // Fetch dispute round and credit item in parallel
+    const [roundResult, itemResult] = await Promise.all([
+      supabase
+        .from("dispute_rounds")
+        .select("*")
+        .eq("id", responseRecord.dispute_round_id)
+        .single(),
+      supabase
+        .from("credit_items")
+        .select("*")
+        .eq("id", responseRecord.credit_item_id)
+        .single(),
+    ]);
+
+    const roundData = roundResult.data;
+    const itemData = itemResult.data;
 
     if (!roundData) {
       return NextResponse.json({ error: "Associated dispute round not found" }, { status: 404 });
     }
-
-    // Fetch the credit item
-    const { data: itemData } = await supabase
-      .from("credit_items")
-      .select("*")
-      .eq("id", responseRecord.credit_item_id)
-      .single();
 
     if (!itemData) {
       return NextResponse.json({ error: "Associated credit item not found" }, { status: 404 });

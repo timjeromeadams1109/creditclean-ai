@@ -48,27 +48,35 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Get item counts per user
+  // Batch fetch counts for all users in 2 queries instead of 2*N
   const userIds = (data || []).map((u: Record<string, unknown>) => u.id as string);
-  const usersWithCounts = await Promise.all(
-    (data || []).map(async (user: Record<string, unknown>) => {
-      const { count: itemCount } = await supabase
-        .from("credit_items")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
 
-      const { count: letterCount } = await supabase
-        .from("dispute_letters")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+  const [itemsResult, lettersResult] = await Promise.all([
+    supabase
+      .from("credit_items")
+      .select("user_id", { count: "exact" })
+      .in("user_id", userIds),
+    supabase
+      .from("dispute_letters")
+      .select("user_id", { count: "exact" })
+      .in("user_id", userIds),
+  ]);
 
-      return {
-        ...user,
-        itemCount: itemCount ?? 0,
-        letterCount: letterCount ?? 0,
-      };
-    })
-  );
+  // Count per user from batch results
+  const itemCounts: Record<string, number> = {};
+  const letterCounts: Record<string, number> = {};
+  for (const row of (itemsResult.data ?? []) as Array<{ user_id: string }>) {
+    itemCounts[row.user_id] = (itemCounts[row.user_id] ?? 0) + 1;
+  }
+  for (const row of (lettersResult.data ?? []) as Array<{ user_id: string }>) {
+    letterCounts[row.user_id] = (letterCounts[row.user_id] ?? 0) + 1;
+  }
+
+  const usersWithCounts = (data || []).map((user: Record<string, unknown>) => ({
+    ...user,
+    itemCount: itemCounts[user.id as string] ?? 0,
+    letterCount: letterCounts[user.id as string] ?? 0,
+  }));
 
   return NextResponse.json({
     users: usersWithCounts,

@@ -16,34 +16,32 @@ export async function GET(
   const { id } = await params;
   const supabase = getServiceSupabase();
 
-  // Fetch credit item
-  const { data: item, error: itemError } = await supabase
-    .from("credit_items")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", userId)
-    .single();
+  // Fetch credit item + dispute rounds + letters in parallel
+  const [itemResult, roundsResult, lettersResult] = await Promise.all([
+    supabase
+      .from("credit_items")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single(),
+    supabase
+      .from("dispute_rounds")
+      .select("*")
+      .eq("credit_item_id", id)
+      .order("round_number", { ascending: true }),
+    supabase
+      .from("dispute_letters")
+      .select("*")
+      .eq("credit_item_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  if (itemError || !item) {
+  if (itemResult.error || !itemResult.data) {
     return NextResponse.json({ error: "Credit item not found" }, { status: 404 });
   }
 
-  // Fetch dispute rounds
-  const { data: rounds } = await supabase
-    .from("dispute_rounds")
-    .select("*")
-    .eq("credit_item_id", id)
-    .order("round_number", { ascending: true });
-
-  // Fetch dispute letters
-  const { data: letters } = await supabase
-    .from("dispute_letters")
-    .select("*")
-    .eq("credit_item_id", id)
-    .order("created_at", { ascending: true });
-
-  // Fetch dispute responses
-  const roundIds = (rounds ?? []).map((r: Record<string, unknown>) => r.id);
+  // Fetch dispute responses (depends on round IDs)
+  const roundIds = (roundsResult.data ?? []).map((r: Record<string, unknown>) => r.id);
   let responses: Record<string, unknown>[] = [];
   if (roundIds.length > 0) {
     const { data: respData } = await supabase
@@ -54,7 +52,7 @@ export async function GET(
     responses = respData ?? [];
   }
 
-  return NextResponse.json({ item, rounds: rounds ?? [], letters: letters ?? [], responses });
+  return NextResponse.json({ item: itemResult.data, rounds: roundsResult.data ?? [], letters: lettersResult.data ?? [], responses });
 }
 
 export async function PUT(
