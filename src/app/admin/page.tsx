@@ -23,6 +23,7 @@ import {
   CreditCard,
   Zap,
   ArrowRight,
+  ScrollText,
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -64,7 +65,7 @@ interface UserRow {
   letterCount: number;
 }
 
-type TabId = "overview" | "users" | "revenue" | "tools";
+type TabId = "overview" | "users" | "revenue" | "changelog" | "tools";
 
 /* ─── Animation ─── */
 
@@ -211,6 +212,7 @@ export default function AdminDashboard() {
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "users", label: "Users", icon: Users },
     { id: "revenue", label: "Revenue", icon: DollarSign },
+    { id: "changelog", label: "Changelog", icon: ScrollText },
     { id: "tools", label: "Tools", icon: Settings },
   ];
 
@@ -615,6 +617,28 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </motion.div>
+          </div>
+        )}
+
+        {/* ══════════════ CHANGELOG TAB ══════════════ */}
+        {activeTab === "changelog" && (
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-center gap-3 mb-2">
+              <ScrollText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Changelog</h2>
+            </div>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+              View and manage changelog entries at{" "}
+              <Link href="/admin/changelog" className="text-teal-600 hover:underline dark:text-teal-400">
+                /admin/changelog
+              </Link>
+            </p>
+            <Link
+              href="/admin/changelog"
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2.5 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100 dark:bg-teal-950/50 dark:text-teal-300 dark:hover:bg-teal-950/80"
+            >
+              Open Changelog <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         )}
 

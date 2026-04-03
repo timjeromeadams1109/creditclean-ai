@@ -5,7 +5,8 @@ import { getServiceSupabase } from "@/lib/supabase";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 24 * 60 * 60 }, // 24 hours — stolen tokens expire rather than living forever
+  jwt: { maxAge: 24 * 60 * 60 }, // 24 hours
   pages: { signIn: "/auth/signin" },
 
   providers: [
@@ -19,7 +20,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // Check owner account
+        // Check owner account — owner bypasses MFA (hardcoded credential)
         const ownerEmail = process.env.OWNER_EMAIL;
         const ownerPassword = process.env.OWNER_PASSWORD;
         if (ownerEmail && ownerPassword && credentials.email === ownerEmail) {
@@ -55,32 +56,53 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updatedSession }) {
       if (user) {
         token.id = user.id;
         token.role = "user";
         token.subscriptionTier = "free";
+        token.mfaPending = false;
+        // Stamp token issuance time on fresh sign-in
+        token.iat = Math.floor(Date.now() / 1000);
       }
 
-      // Owner role
+      // Client called update({ mfaPending: false }) after successful MFA verify
+      if (trigger === "update" && updatedSession?.mfaPending === false) {
+        token.mfaPending = false;
+      }
+
+      // Rotate token timestamp every hour so clients must re-verify
+      const tokenAge = Math.floor(Date.now() / 1000) - ((token.iat as number) ?? 0);
+      if (tokenAge > 3600) {
+        token.iat = Math.floor(Date.now() / 1000);
+      }
+
+      // Owner bypasses MFA — hardcoded credential account
       if (token.email === process.env.OWNER_EMAIL) {
         token.role = "owner";
         token.subscriptionTier = "premium";
+        token.mfaPending = false;
         return token;
       }
 
-      // Refresh from DB
+      // Refresh from DB — on fresh login also check mfa_enabled
       if (token.id && token.id !== "owner") {
         try {
           const supabase = getServiceSupabase();
           const { data } = await supabase
             .from("profiles")
-            .select("subscription_tier, role")
-            .eq("id", token.id)
+            .select("subscription_tier, role, mfa_enabled")
+            .eq("id", token.id as string)
             .single();
           if (data) {
             token.subscriptionTier = data.subscription_tier ?? "free";
             token.role = data.role ?? "user";
+            // Only set mfaPending on fresh login (user object present).
+            // If the token already has mfaPending=false it means the user
+            // already passed MFA this session — do not re-gate them.
+            if (user && data.mfa_enabled) {
+              token.mfaPending = true;
+            }
           }
         } catch { /* keep existing */ }
       }
@@ -92,6 +114,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as Record<string, unknown>).id = token.id;
         (session.user as Record<string, unknown>).role = token.role;
         (session.user as Record<string, unknown>).subscriptionTier = token.subscriptionTier;
+        (session.user as Record<string, unknown>).mfaPending =
+          (token.mfaPending as boolean) ?? false;
       }
       return session;
     },

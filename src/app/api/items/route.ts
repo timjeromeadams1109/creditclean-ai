@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { validate, itemCreateSchema } from "@/lib/validation";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -45,6 +46,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const parsed = validate(itemCreateSchema, body);
+    if ('error' in parsed) return parsed.error;
     const {
       bureaus,
       item_type,
@@ -63,7 +66,7 @@ export async function POST(req: NextRequest) {
       inquiry_date,
       inquiry_creditor,
       user_notes,
-    } = body;
+    } = parsed.data;
 
     // Accept an array of bureaus to create one item per bureau
     const bureauList: string[] = Array.isArray(bureaus) ? bureaus : [bureaus];

@@ -5,6 +5,7 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { isDisposableEmail } from "@/lib/disposable-emails";
 import { sendNotification } from "@/lib/email";
 import { welcomeEmail } from "@/lib/email-templates";
+import { validate, signupSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   // Rate limit by IP to prevent brute-force signups
@@ -13,15 +14,10 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
-    const { name, email, password } = await req.json();
-
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
-    }
-
-    if (typeof password !== "string" || password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-    }
+    const body = await req.json();
+    const parsed = validate(signupSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { name, email, password } = parsed.data;
 
     const normalizedEmail = email.toLowerCase().trim();
 

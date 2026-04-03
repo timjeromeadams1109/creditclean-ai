@@ -4,6 +4,7 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { sendNotification } from "@/lib/email";
 import { passwordResetEmail } from "@/lib/email-templates";
 import crypto from "crypto";
+import { validate, forgotPasswordSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -11,11 +12,10 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
-    const { email } = await req.json();
-
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
-    }
+    const body = await req.json();
+    const parsed = validate(forgotPasswordSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { email } = parsed.data;
 
     const normalizedEmail = email.toLowerCase().trim();
     const supabase = getServiceSupabase();

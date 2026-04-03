@@ -1,13 +1,312 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { User, Bell, Shield, CreditCard, LogOut, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { User, Bell, Shield, CreditCard, LogOut, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ShieldCheck, ShieldOff, Copy, Check } from "lucide-react";
 import CROADisclosureModal from "@/components/shared/CROADisclosureModal";
 
+// ── MFA Setup Flow ──────────────────────────────────────────────────────────
+
+type MfaStep = "idle" | "qr" | "confirm" | "backup-codes" | "disabling";
+
+interface MfaSectionProps {
+  mfaEnabled: boolean;
+  onToggled: () => void;
+}
+
+function MfaSection({ mfaEnabled, onToggled }: MfaSectionProps) {
+  const [step, setStep] = useState<MfaStep>("idle");
+  const [qrUri, setQrUri] = useState("");
+  const [encryptedSecret, setEncryptedSecret] = useState("");
+  const [setupCode, setSetupCode] = useState("");
+  const [disableCode, setDisableCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function startSetup() {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/setup", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Setup failed");
+      setQrUri(data.uri);
+      setEncryptedSecret(data.encryptedSecret);
+      setStep("qr");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function confirmSetup() {
+    if (setupCode.length !== 6) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/verify-setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ encryptedSecret, code: setupCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Verification failed");
+      setBackupCodes(data.backupCodes);
+      setStep("backup-codes");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function confirmDisable() {
+    if (!disableCode.trim()) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: disableCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to disable");
+      setStep("idle");
+      setDisableCode("");
+      onToggled();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copyBackupCodes() {
+    navigator.clipboard.writeText(backupCodes.join("\n")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function finishSetup() {
+    setStep("idle");
+    setSetupCode("");
+    setBackupCodes([]);
+    onToggled();
+  }
+
+  if (mfaEnabled && step === "idle") {
+    return (
+      <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Two-Factor Authentication
+              </h3>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              MFA is active. Your account requires a code from your authenticator app at login.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+            Enabled
+          </span>
+        </div>
+        <button
+          onClick={() => { setStep("disabling"); setError(""); }}
+          className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800/50 dark:hover:bg-red-950/20"
+        >
+          <ShieldOff className="h-4 w-4" />
+          Disable 2FA
+        </button>
+      </div>
+    );
+  }
+
+  if (step === "disabling") {
+    return (
+      <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Disable Two-Factor Authentication</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Enter your current authenticator code or a backup code to confirm.
+        </p>
+        {error && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800/50 dark:bg-red-950/30 dark:text-red-400">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            {error}
+          </div>
+        )}
+        <div className="mt-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={12}
+            placeholder="6-digit code or backup code"
+            value={disableCode}
+            onChange={(e) => setDisableCode(e.target.value.replace(/\s/g, ""))}
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-center font-mono text-sm tracking-widest outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={confirmDisable}
+            disabled={loading || !disableCode.trim()}
+            className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {loading ? "Disabling..." : "Confirm Disable"}
+          </button>
+          <button
+            onClick={() => { setStep("idle"); setError(""); setDisableCode(""); }}
+            className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "qr") {
+    // Render QR code as an img using a free QR API — no extra dependency
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUri)}`;
+    return (
+      <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Set Up Two-Factor Authentication</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)
+        </p>
+        <div className="mt-4 flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrImageUrl}
+            alt="MFA QR code — scan with your authenticator app"
+            width={200}
+            height={200}
+            className="rounded-xl border border-zinc-200 p-2 dark:border-zinc-700 dark:bg-white"
+          />
+        </div>
+        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+          After scanning, enter the 6-digit code your app shows:
+        </p>
+        {error && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800/50 dark:bg-red-950/30 dark:text-red-400">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            {error}
+          </div>
+        )}
+        <div className="mt-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="000000"
+            value={setupCode}
+            onChange={(e) => setSetupCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-center font-mono text-lg tracking-[0.4em] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={confirmSetup}
+            disabled={loading || setupCode.length !== 6}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {loading ? "Verifying..." : "Verify & Enable"}
+          </button>
+          <button
+            onClick={() => { setStep("idle"); setError(""); setSetupCode(""); }}
+            className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "backup-codes") {
+    return (
+      <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">2FA Enabled — Save Your Backup Codes</h3>
+        </div>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Store these codes somewhere safe. Each code can be used once if you lose access to your authenticator app.
+          These will not be shown again.
+        </p>
+        <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="grid grid-cols-2 gap-2">
+            {backupCodes.map((code) => (
+              <code key={code} className="rounded bg-white px-3 py-1.5 text-center text-sm font-mono font-medium text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100">
+                {code}
+              </code>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={copyBackupCodes}
+            className="flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {copied ? <Check className="h-4 w-4 text-teal-600" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copied!" : "Copy All"}
+          </button>
+          <button
+            onClick={finishSetup}
+            className="rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // idle + not enabled
+  return (
+    <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-start gap-3">
+        <Shield className="mt-0.5 h-5 w-5 shrink-0 text-zinc-400" />
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Two-Factor Authentication
+          </h3>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Add an extra layer of security to your financial account. Required for Pro users.
+          </p>
+          {error && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800/50 dark:bg-red-950/30 dark:text-red-400">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              {error}
+            </div>
+          )}
+          <button
+            onClick={startSetup}
+            disabled={loading}
+            className="mt-3 flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            {loading ? "Loading..." : "Enable 2FA"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Page ────────────────────────────────────────────────────────────
+
 function SettingsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const justUpgraded = searchParams.get("upgraded") === "1";
   const [activeTab, setActiveTab] = useState(justUpgraded ? "billing" : "profile");
@@ -15,6 +314,14 @@ function SettingsContent() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/mfa/status")
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.mfaEnabled === "boolean") setMfaEnabled(d.mfaEnabled); })
+      .catch(() => {});
+  }, []);
 
   async function handleUpgrade() {
     setCheckoutLoading(true);
@@ -178,6 +485,11 @@ function SettingsContent() {
                   Update Password
                 </button>
               </div>
+
+              <MfaSection
+                mfaEnabled={mfaEnabled}
+                onToggled={() => setMfaEnabled((prev) => !prev)}
+              />
 
               <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
                 <h3 className="text-sm font-semibold text-red-600">Danger Zone</h3>

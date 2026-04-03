@@ -16,6 +16,7 @@ import {
   Bureau,
   ItemType,
 } from "@/lib/disputes";
+import { validate, disputeGenerateSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -42,15 +43,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { creditItemId, strategy, userProfile: providedProfile } = body as {
+    const parsed = validate(disputeGenerateSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { creditItemId, strategy, userProfile: providedProfile } = parsed.data as {
       creditItemId: string;
       strategy?: DisputeStrategy;
       userProfile?: UserProfile | null;
     };
-
-    if (!creditItemId) {
-      return NextResponse.json({ error: "creditItemId is required" }, { status: 400 });
-    }
 
     // Use provided profile or fetch from DB
     let userProfile: UserProfile;

@@ -5,6 +5,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { analyzeFullReport, parseManualEntry } from "@/lib/forensic";
 import { checkUsageLimit } from "@/lib/usage-limits";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { validate, forensicAnalyzeSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -31,21 +32,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { items, bureau, state } = body;
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "At least one credit item is required." },
-        { status: 400 }
-      );
-    }
-
-    if (!bureau) {
-      return NextResponse.json(
-        { error: "Bureau is required." },
-        { status: 400 }
-      );
-    }
+    const parsed = validate(forensicAnalyzeSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { items, bureau, state } = parsed.data;
 
     // Parse manual entries into ParsedCreditItem format
     const parsedItems = items.map((item: Record<string, unknown>) => {

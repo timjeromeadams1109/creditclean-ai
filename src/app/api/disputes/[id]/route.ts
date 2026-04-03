@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { validate, disputeUpdateSchema } from "@/lib/validation";
 
 export async function GET(
   _req: NextRequest,
@@ -58,6 +59,8 @@ export async function PUT(
 
   try {
     const body = await req.json();
+    const parsed = validate(disputeUpdateSchema, body);
+    if ('error' in parsed) return parsed.error;
 
     // Verify ownership
     const { data: existing } = await supabase
@@ -76,10 +79,10 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     };
 
-    if (body.status) updateFields.status = body.status;
-    if (body.date_sent) updateFields.date_sent = body.date_sent;
-    if (body.tracking_number) updateFields.tracking_number = body.tracking_number;
-    if (body.outcome) updateFields.outcome = body.outcome;
+    if (parsed.data.status) updateFields.status = parsed.data.status;
+    if (parsed.data.date_sent) updateFields.date_sent = parsed.data.date_sent;
+    if (parsed.data.tracking_number) updateFields.tracking_number = parsed.data.tracking_number;
+    if (parsed.data.outcome) updateFields.outcome = parsed.data.outcome;
 
     const { data, error } = await supabase
       .from("dispute_rounds")

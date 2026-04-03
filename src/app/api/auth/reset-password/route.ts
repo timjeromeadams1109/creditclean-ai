@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { validate, resetPasswordSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -9,15 +10,10 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
-    const { token, password } = await req.json();
-
-    if (!token || typeof token !== "string") {
-      return NextResponse.json({ error: "Reset token is required" }, { status: 400 });
-    }
-
-    if (!password || typeof password !== "string" || password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-    }
+    const body = await req.json();
+    const parsed = validate(resetPasswordSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { token, password } = parsed.data;
 
     const supabase = getServiceSupabase();
 

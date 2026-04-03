@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { validate, letterStatusSchema } from "@/lib/validation";
 
 export async function PATCH(
   req: NextRequest,
@@ -17,12 +18,9 @@ export async function PATCH(
   const supabase = getServiceSupabase();
 
   const body = await req.json();
-  const { status } = body;
-
-  const VALID_STATUSES = ["draft", "final", "sent", "awaiting_response"];
-  if (!status || !VALID_STATUSES.includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
+  const parsed = validate(letterStatusSchema, body);
+  if ('error' in parsed) return parsed.error;
+  const { status } = parsed.data;
 
   const update: Record<string, unknown> = {
     status,

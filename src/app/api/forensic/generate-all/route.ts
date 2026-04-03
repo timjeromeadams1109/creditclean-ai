@@ -11,6 +11,7 @@ import {
   type CreditItem,
   type UserProfile,
 } from "@/lib/disputes/types";
+import { validate, forensicGenerateAllSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -23,14 +24,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { reportId } = body;
-
-    if (!reportId) {
-      return NextResponse.json(
-        { error: "Report ID is required." },
-        { status: 400 }
-      );
-    }
+    const parsed = validate(forensicGenerateAllSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { reportId } = parsed.data;
 
     // Fetch the forensic report
     const { data: reportRow, error: fetchError } = await supabase

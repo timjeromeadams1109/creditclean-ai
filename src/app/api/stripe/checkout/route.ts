@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { validate, stripeCheckoutSchema } from "@/lib/validation";
 
 /**
  * POST /api/stripe/checkout
@@ -28,21 +29,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { priceId, croaAccepted } = body as {
-      priceId: string;
-      croaAccepted: boolean;
-    };
-
-    if (!priceId) {
-      return NextResponse.json({ error: "priceId is required" }, { status: 400 });
-    }
-
-    if (!croaAccepted) {
-      return NextResponse.json(
-        { error: "CROA disclosures must be accepted before purchase" },
-        { status: 400 }
-      );
-    }
+    const parsed = validate(stripeCheckoutSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { priceId, croaAccepted } = parsed.data;
 
     const supabase = getServiceSupabase();
     const userEmail = session.user.email || "";

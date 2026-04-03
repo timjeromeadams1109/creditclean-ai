@@ -1,0 +1,797 @@
+{
+  "url": "https://creditclean-ai.vercel.app",
+  "project": "Unknown",
+  "timestamp": "2026-03-13T18:19:18.293Z",
+  "duration": "46.0s",
+  "threshold": 80,
+  "score": 99,
+  "passed": true,
+  "criticalFailures": 0,
+  "categories": {
+    "page-loads": {
+      "score": 98,
+      "weight": 15,
+      "pass": 44,
+      "warn": 0,
+      "fail": 1,
+      "info": 0,
+      "total": 45
+    },
+    "console-health": {
+      "score": 93,
+      "weight": 10,
+      "pass": 28,
+      "warn": 0,
+      "fail": 2,
+      "info": 0,
+      "total": 30
+    },
+    "navigation-links": {
+      "score": 100,
+      "weight": 15,
+      "pass": 2,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 3
+    },
+    "api-health": {
+      "score": 100,
+      "weight": 15,
+      "pass": 0,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 1
+    },
+    "user-flows": {
+      "score": 100,
+      "weight": 20,
+      "pass": 3,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 3
+    },
+    "auth-flows": {
+      "score": 100,
+      "weight": 10,
+      "pass": 0,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 1
+    },
+    "form-submissions": {
+      "score": 100,
+      "weight": 10,
+      "pass": 6,
+      "warn": 0,
+      "fail": 0,
+      "info": 3,
+      "total": 9
+    },
+    "visual-stability": {
+      "score": 100,
+      "weight": 5,
+      "pass": 6,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 6
+    }
+  },
+  "checks": [
+    {
+      "name": "/ — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app",
+      "critical": false
+    },
+    {
+      "name": "/ — Load Time",
+      "value": "153ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/ — Has Content",
+      "value": "5555 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/auth/signin — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/auth/signin",
+      "critical": false
+    },
+    {
+      "name": "/auth/signin — Load Time",
+      "value": "107ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/auth/signin — Has Content",
+      "value": "0 chars",
+      "status": "fail",
+      "category": "page-loads",
+      "detail": "Page appears blank or has minimal content"
+    },
+    {
+      "name": "/auth/signup — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/auth/signup",
+      "critical": false
+    },
+    {
+      "name": "/auth/signup — Load Time",
+      "value": "105ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/auth/signup — Has Content",
+      "value": "360 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/dashboard — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/dashboard",
+      "critical": false
+    },
+    {
+      "name": "/dashboard — Load Time",
+      "value": "162ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/dashboard — Has Content",
+      "value": "905 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/items — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/items",
+      "critical": false
+    },
+    {
+      "name": "/items — Load Time",
+      "value": "107ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/items — Has Content",
+      "value": "792 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/items/new — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/items/new",
+      "critical": false
+    },
+    {
+      "name": "/items/new — Load Time",
+      "value": "97ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/items/new — Has Content",
+      "value": "781 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/forensic — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/forensic",
+      "critical": false
+    },
+    {
+      "name": "/forensic — Load Time",
+      "value": "109ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/forensic — Has Content",
+      "value": "939 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/forensic/analyze — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/forensic/analyze",
+      "critical": false
+    },
+    {
+      "name": "/forensic/analyze — Load Time",
+      "value": "103ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/forensic/analyze — Has Content",
+      "value": "965 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/letters — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/letters",
+      "critical": false
+    },
+    {
+      "name": "/letters — Load Time",
+      "value": "115ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/letters — Has Content",
+      "value": "784 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/responses — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/responses",
+      "critical": false
+    },
+    {
+      "name": "/responses — Load Time",
+      "value": "106ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/responses — Has Content",
+      "value": "1374 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/scores — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/scores",
+      "critical": false
+    },
+    {
+      "name": "/scores — Load Time",
+      "value": "135ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/scores — Has Content",
+      "value": "773 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/settings — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/settings",
+      "critical": false
+    },
+    {
+      "name": "/settings — Load Time",
+      "value": "179ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/settings — Has Content",
+      "value": "786 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/privacy — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/privacy",
+      "critical": false
+    },
+    {
+      "name": "/privacy — Load Time",
+      "value": "158ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/privacy — Has Content",
+      "value": "5461 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/terms — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/terms",
+      "critical": false
+    },
+    {
+      "name": "/terms — Load Time",
+      "value": "103ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/terms — Has Content",
+      "value": "6744 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/disclaimer — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://creditclean-ai.vercel.app/disclaimer",
+      "critical": false
+    },
+    {
+      "name": "/disclaimer — Load Time",
+      "value": "147ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "/disclaimer — Has Content",
+      "value": "6295 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "/ — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/ — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/auth/signin — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/auth/signin — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/auth/signup — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/auth/signup — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/dashboard — Console Errors",
+      "value": "1 error(s)",
+      "status": "fail",
+      "category": "console-health",
+      "detail": "Uncaught: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+    },
+    {
+      "name": "/dashboard — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/items — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/items — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/items/new — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/items/new — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/forensic — Console Errors",
+      "value": "1 error(s)",
+      "status": "fail",
+      "category": "console-health",
+      "detail": "Uncaught: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+    },
+    {
+      "name": "/forensic — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/forensic/analyze — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/forensic/analyze — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/letters — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/letters — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/responses — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/responses — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/scores — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/scores — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/settings — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/settings — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/privacy — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/privacy — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/terms — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/terms — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "/disclaimer — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "/disclaimer — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Internal Links Health",
+      "value": "12/12 OK",
+      "status": "pass",
+      "category": "navigation-links",
+      "detail": "All internal links valid"
+    },
+    {
+      "name": "Dead Anchors",
+      "value": "0 found",
+      "status": "pass",
+      "category": "navigation-links",
+      "detail": "No dead anchors"
+    },
+    {
+      "name": "External Links",
+      "value": "1 found",
+      "status": "info",
+      "category": "navigation-links",
+      "detail": "External links not tested for availability"
+    },
+    {
+      "name": "API Discovery",
+      "value": "No endpoints found",
+      "status": "info",
+      "category": "api-health",
+      "detail": "Add apiEndpoints to manifest for targeted testing"
+    },
+    {
+      "name": "Flow — Sign In page loads with form",
+      "value": "PASSED",
+      "status": "pass",
+      "category": "user-flows",
+      "detail": "All steps completed",
+      "critical": false
+    },
+    {
+      "name": "Flow — Sign Up page loads with form",
+      "value": "PASSED",
+      "status": "pass",
+      "category": "user-flows",
+      "detail": "All steps completed",
+      "critical": false
+    },
+    {
+      "name": "Flow — Landing page has interactive calculator",
+      "value": "PASSED",
+      "status": "pass",
+      "category": "user-flows",
+      "detail": "All steps completed",
+      "critical": false
+    },
+    {
+      "name": "Auth Testing",
+      "value": "Disabled",
+      "status": "info",
+      "category": "auth-flows",
+      "detail": "Set auth.enabled=true in manifest to test auth flows"
+    },
+    {
+      "name": "/auth/signin — Form \"form-0\" Visibility",
+      "value": "2 inputs",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "2 total inputs, 2 visible"
+    },
+    {
+      "name": "/auth/signin — Form \"form-0\" Submit Button",
+      "value": "Present",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "Submit button found"
+    },
+    {
+      "name": "/auth/signin — Form \"form-0\" Required Fields",
+      "value": "2 required",
+      "status": "info",
+      "category": "form-submissions",
+      "detail": "Fields: email, password"
+    },
+    {
+      "name": "/auth/signup — Form \"form-0\" Visibility",
+      "value": "3 inputs",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "3 total inputs, 3 visible"
+    },
+    {
+      "name": "/auth/signup — Form \"form-0\" Submit Button",
+      "value": "Present",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "Submit button found"
+    },
+    {
+      "name": "/auth/signup — Form \"form-0\" Required Fields",
+      "value": "3 required",
+      "status": "info",
+      "category": "form-submissions",
+      "detail": "Fields: text, email, password"
+    },
+    {
+      "name": "/items/new — Form \"form-0\" Visibility",
+      "value": "8 inputs",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "8 total inputs, 8 visible"
+    },
+    {
+      "name": "/items/new — Form \"form-0\" Submit Button",
+      "value": "Present",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "Submit button found"
+    },
+    {
+      "name": "/items/new — Form \"form-0\" Required Fields",
+      "value": "2 required",
+      "status": "info",
+      "category": "form-submissions",
+      "detail": "Fields: text, select-one"
+    },
+    {
+      "name": "/ — CLS (Layout Shift)",
+      "value": "0.0009",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "/ — Element Overlap",
+      "value": "0 overlap(s)",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "No overlapping interactives"
+    },
+    {
+      "name": "/auth/signin — CLS (Layout Shift)",
+      "value": "0.0000",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "/auth/signin — Element Overlap",
+      "value": "0 overlap(s)",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "No overlapping interactives"
+    },
+    {
+      "name": "/auth/signup — CLS (Layout Shift)",
+      "value": "0.0000",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "/auth/signup — Element Overlap",
+      "value": "0 overlap(s)",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "No overlapping interactives"
+    }
+  ],
+  "summary": {
+    "totalChecks": 98,
+    "passed": 89,
+    "warnings": 0,
+    "failed": 3,
+    "info": 6
+  }
+}

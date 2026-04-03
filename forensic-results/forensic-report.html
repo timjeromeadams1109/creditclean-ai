@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forensic QA Report — Unknown</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --border: #334155;
+      --pass: #22c55e;
+      --warn: #eab308;
+      --fail: #ef4444;
+      --info: #3b82f6;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .report-header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+    }
+    .report-header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .report-header .project { color: var(--info); font-size: 1.1rem; }
+    .report-header .url { color: var(--text2); font-size: 0.9rem; word-break: break-all; margin-top: 0.25rem; }
+    .report-header .meta { color: var(--text2); font-size: 0.85rem; margin-top: 1rem; }
+    .report-header .meta span { margin: 0 1rem; }
+
+    .summary-bar {
+      display: flex; justify-content: center; gap: 3rem;
+      margin-top: 2rem; padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .summary-stat { text-align: center; }
+    .summary-stat .num { font-size: 2rem; font-weight: 700; }
+    .summary-stat .label { font-size: 0.8rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .critical-section {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .critical-section h2 { color: var(--fail); font-size: 1.2rem; margin-bottom: 1rem; }
+    .critical-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(239,68,68,0.15);
+    }
+    .critical-item:last-child { border-bottom: none; }
+    .critical-icon { color: var(--fail); font-size: 1.2rem; margin-top: 0.15rem; }
+    .critical-item p { color: var(--text2); font-size: 0.85rem; margin-top: 0.25rem; }
+
+    .category-section { border-top: 1px solid var(--border); background: var(--surface); }
+    .category-section:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .category-section:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+    .category-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .category-header:hover { background: rgba(255,255,255,0.03); }
+    .category-title h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .weight-tag {
+      font-size: 0.7rem; color: var(--text2); background: var(--surface2);
+      padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.5rem;
+    }
+    .category-stats { display: flex; gap: 1rem; }
+    .stat { font-size: 0.75rem; font-weight: 500; padding: 0.15rem 0.5rem; border-radius: 4px; }
+    .stat.pass { color: var(--pass); background: rgba(34,197,94,0.1); }
+    .stat.warn { color: var(--warn); background: rgba(234,179,8,0.1); }
+    .stat.fail { color: var(--fail); background: rgba(239,68,68,0.1); }
+
+    .collapsed .checks-table { display: none; }
+
+    .checks-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .checks-table thead { background: var(--surface2); }
+    .checks-table th {
+      text-align: left; padding: 0.5rem 1rem;
+      color: var(--text2); font-weight: 500; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .checks-table td { padding: 0.6rem 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
+    .check-row:hover { background: rgba(255,255,255,0.02); }
+    .status-badge {
+      display: inline-block; padding: 0.15rem 0.5rem;
+      border-radius: 4px; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.03em; white-space: nowrap;
+    }
+    .name-cell { font-weight: 500; }
+    .value-cell { color: var(--text2); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; }
+    .detail-cell { color: var(--text2); font-size: 0.75rem; max-width: 300px; }
+    .critical-tag {
+      font-size: 0.6rem; background: rgba(239,68,68,0.2); color: var(--fail);
+      padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.5rem;
+    }
+
+    .report-footer {
+      text-align: center; padding: 2rem;
+      color: var(--text2); font-size: 0.8rem;
+    }
+
+    @media print {
+      body { background: #fff; color: #000; padding: 1rem; }
+      .report-header { background: #f8fafc; border-color: #e2e8f0; }
+      .category-section { background: #fff; }
+      .collapsed .checks-table { display: table; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .summary-bar { flex-wrap: wrap; gap: 1.5rem; }
+      .category-header { flex-direction: column; gap: 0.5rem; }
+      .checks-table { font-size: 0.75rem; }
+      .detail-cell { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="report-header">
+      <h1>Maven Forensic QA Report</h1>
+      <div class="project">Unknown</div>
+      <div class="url">https://creditclean-ai.vercel.app</div>
+      <div class="meta">
+        <span>2026-03-13T18:19:18.293Z</span>
+        <span>46.0s</span>
+        <span>98 checks</span>
+      </div>
+      <div class="summary-bar">
+        <div class="summary-stat">
+          <div class="num" style="color:#22c55e">99</div>
+          <div class="label">Overall Score</div>
+        </div>
+        <div class="summary-stat">
+          <div class="num">98</div>
+          <div class="label">Total Checks</div>
+        </div>
+        <div class="summary-stat">
+          <div class="num" style="color:var(--pass)">
+            PASS
+          </div>
+          <div class="label">Threshold (80)</div>
+        </div>
+        <div class="summary-stat">
+          <div class="num">3</div>
+          <div class="label">Failures</div>
+        </div>
+      </div>
+    </header>
+
+    
+    
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Page Loads <span class="weight-tag">15%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">44 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">1 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="5.654866776461631"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">98</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — Load Time</td>
+        <td class="value-cell">153ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — Has Content</td>
+        <td class="value-cell">5555 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/auth/signin</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Load Time</td>
+        <td class="value-cell">107ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row fail">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#fef2f2;color:#ef4444">
+            ✗ FAIL
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Has Content</td>
+        <td class="value-cell">0 chars</td>
+        <td class="detail-cell">Page appears blank or has minimal content</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/auth/signup</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Load Time</td>
+        <td class="value-cell">105ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Has Content</td>
+        <td class="value-cell">360 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/dashboard — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/dashboard</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/dashboard — Load Time</td>
+        <td class="value-cell">162ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/dashboard — Has Content</td>
+        <td class="value-cell">905 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/items</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items — Load Time</td>
+        <td class="value-cell">107ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items — Has Content</td>
+        <td class="value-cell">792 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/items/new</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Load Time</td>
+        <td class="value-cell">97ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Has Content</td>
+        <td class="value-cell">781 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/forensic</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic — Load Time</td>
+        <td class="value-cell">109ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic — Has Content</td>
+        <td class="value-cell">939 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic/analyze — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/forensic/analyze</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic/analyze — Load Time</td>
+        <td class="value-cell">103ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic/analyze — Has Content</td>
+        <td class="value-cell">965 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/letters — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/letters</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/letters — Load Time</td>
+        <td class="value-cell">115ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/letters — Has Content</td>
+        <td class="value-cell">784 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/responses — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/responses</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/responses — Load Time</td>
+        <td class="value-cell">106ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/responses — Has Content</td>
+        <td class="value-cell">1374 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/scores — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/scores</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/scores — Load Time</td>
+        <td class="value-cell">135ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/scores — Has Content</td>
+        <td class="value-cell">773 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/settings — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/settings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/settings — Load Time</td>
+        <td class="value-cell">179ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/settings — Has Content</td>
+        <td class="value-cell">786 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/privacy — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/privacy</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/privacy — Load Time</td>
+        <td class="value-cell">158ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/privacy — Has Content</td>
+        <td class="value-cell">5461 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/terms — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/terms</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/terms — Load Time</td>
+        <td class="value-cell">103ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/terms — Has Content</td>
+        <td class="value-cell">6744 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/disclaimer — HTTP Status</td>
+        <td class="value-cell">200</td>
+        <td class="detail-cell">https://creditclean-ai.vercel.app/disclaimer</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/disclaimer — Load Time</td>
+        <td class="value-cell">147ms</td>
+        <td class="detail-cell">Good</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/disclaimer — Has Content</td>
+        <td class="value-cell">6295 chars</td>
+        <td class="detail-cell">Content present</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Console Health <span class="weight-tag">10%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">28 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">2 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="19.79203371761571"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">93</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row fail">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#fef2f2;color:#ef4444">
+            ✗ FAIL
+          </span>
+        </td>
+        <td class="name-cell">/dashboard — Console Errors</td>
+        <td class="value-cell">1 error(s)</td>
+        <td class="detail-cell">Uncaught: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/dashboard — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row fail">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#fef2f2;color:#ef4444">
+            ✗ FAIL
+          </span>
+        </td>
+        <td class="name-cell">/forensic — Console Errors</td>
+        <td class="value-cell">1 error(s)</td>
+        <td class="detail-cell">Uncaught: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic/analyze — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/forensic/analyze — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/letters — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/letters — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/responses — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/responses — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/scores — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/scores — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/settings — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/settings — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/privacy — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/privacy — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/terms — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/terms — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/disclaimer — Console Errors</td>
+        <td class="value-cell">0 error(s)</td>
+        <td class="detail-cell">Clean console</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/disclaimer — Console Warnings</td>
+        <td class="value-cell">0 warning(s)</td>
+        <td class="detail-cell">No warnings</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Navigation & Links <span class="weight-tag">15%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">2 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">Internal Links Health</td>
+        <td class="value-cell">12/12 OK</td>
+        <td class="detail-cell">All internal links valid</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">Dead Anchors</td>
+        <td class="value-cell">0 found</td>
+        <td class="detail-cell">No dead anchors</td>
+      </tr>
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">External Links</td>
+        <td class="value-cell">1 found</td>
+        <td class="detail-cell">External links not tested for availability</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>API Health <span class="weight-tag">15%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">0 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">API Discovery</td>
+        <td class="value-cell">No endpoints found</td>
+        <td class="detail-cell">Add apiEndpoints to manifest for targeted testing</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>User Flows <span class="weight-tag">20%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">3 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">Flow — Sign In page loads with form</td>
+        <td class="value-cell">PASSED</td>
+        <td class="detail-cell">All steps completed</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">Flow — Sign Up page loads with form</td>
+        <td class="value-cell">PASSED</td>
+        <td class="detail-cell">All steps completed</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">Flow — Landing page has interactive calculator</td>
+        <td class="value-cell">PASSED</td>
+        <td class="detail-cell">All steps completed</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Auth Flows <span class="weight-tag">10%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">0 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">Auth Testing</td>
+        <td class="value-cell">Disabled</td>
+        <td class="detail-cell">Set auth.enabled=true in manifest to test auth flows</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Form Submissions <span class="weight-tag">10%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">6 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Form "form-0" Visibility</td>
+        <td class="value-cell">2 inputs</td>
+        <td class="detail-cell">2 total inputs, 2 visible</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Form "form-0" Submit Button</td>
+        <td class="value-cell">Present</td>
+        <td class="detail-cell">Submit button found</td>
+      </tr>
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Form "form-0" Required Fields</td>
+        <td class="value-cell">2 required</td>
+        <td class="detail-cell">Fields: email, password</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Form "form-0" Visibility</td>
+        <td class="value-cell">3 inputs</td>
+        <td class="detail-cell">3 total inputs, 3 visible</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Form "form-0" Submit Button</td>
+        <td class="value-cell">Present</td>
+        <td class="detail-cell">Submit button found</td>
+      </tr>
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Form "form-0" Required Fields</td>
+        <td class="value-cell">3 required</td>
+        <td class="detail-cell">Fields: text, email, password</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Form "form-0" Visibility</td>
+        <td class="value-cell">8 inputs</td>
+        <td class="detail-cell">8 total inputs, 8 visible</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Form "form-0" Submit Button</td>
+        <td class="value-cell">Present</td>
+        <td class="detail-cell">Submit button found</td>
+      </tr>
+      <tr class="check-row info">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#eff6ff;color:#3b82f6">
+            ℹ INFO
+          </span>
+        </td>
+        <td class="name-cell">/items/new — Form "form-0" Required Fields</td>
+        <td class="value-cell">2 required</td>
+        <td class="detail-cell">Fields: text, select-one</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="category-section">
+        <div class="category-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="category-title">
+            <h3>Visual Stability <span class="weight-tag">5%</span></h3>
+            <div class="category-stats">
+              <span class="stat pass">6 passed</span>
+              <span class="stat warn">0 warnings</span>
+              <span class="stat fail">0 failed</span>
+            </div>
+          </div>
+          <div class="category-score">
+            
+      <svg width="64" height="64" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          stroke-dasharray="282.7433388230814" stroke-dashoffset="0"
+          stroke-linecap="round" transform="rotate(-90 50 50)"
+          style="transition: stroke-dashoffset 1s ease-out"/>
+        <text x="50" y="45" text-anchor="middle" font-size="24" font-weight="700" fill="#22c55e">100</text>
+        <text x="50" y="62" text-anchor="middle" font-size="12" fill="#6b7280">/ 100</text>
+      </svg>
+          </div>
+        </div>
+        <table class="checks-table">
+          <thead>
+            <tr><th>Status</th><th>Check</th><th>Value</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — CLS (Layout Shift)</td>
+        <td class="value-cell">0.0009</td>
+        <td class="detail-cell">Good (< 0.1)</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/ — Element Overlap</td>
+        <td class="value-cell">0 overlap(s)</td>
+        <td class="detail-cell">No overlapping interactives</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — CLS (Layout Shift)</td>
+        <td class="value-cell">0.0000</td>
+        <td class="detail-cell">Good (< 0.1)</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signin — Element Overlap</td>
+        <td class="value-cell">0 overlap(s)</td>
+        <td class="detail-cell">No overlapping interactives</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — CLS (Layout Shift)</td>
+        <td class="value-cell">0.0000</td>
+        <td class="detail-cell">Good (< 0.1)</td>
+      </tr>
+      <tr class="check-row pass">
+        <td class="status-cell">
+          <span class="status-badge" style="background:#f0fdf4;color:#22c55e">
+            ✓ PASS
+          </span>
+        </td>
+        <td class="name-cell">/auth/signup — Element Overlap</td>
+        <td class="value-cell">0 overlap(s)</td>
+        <td class="detail-cell">No overlapping interactives</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+
+    <footer class="report-footer">
+      Maven Forensic QA v1.0 &mdash; Generated 3/13/2026
+    </footer>
+  </div>
+</body>
+</html>

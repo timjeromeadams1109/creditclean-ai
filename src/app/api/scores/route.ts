@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { validate, scoreCreateSchema } from "@/lib/validation";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -43,15 +44,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { bureau, score, score_type, recorded_at } = body;
-
-    if (!bureau || score == null) {
-      return NextResponse.json({ error: "bureau and score are required" }, { status: 400 });
-    }
-
-    if (typeof score !== "number" || score < 300 || score > 850) {
-      return NextResponse.json({ error: "Score must be a number between 300 and 850" }, { status: 400 });
-    }
+    const parsed = validate(scoreCreateSchema, body);
+    if ('error' in parsed) return parsed.error;
+    const { bureau, score, score_type, recorded_at } = parsed.data;
 
     const { data, error } = await supabase
       .from("credit_scores")

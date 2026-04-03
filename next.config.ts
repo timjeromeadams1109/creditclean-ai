@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -31,7 +32,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co",
+              "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
               "frame-src 'self' https://js.stripe.com",
             ].join("; "),
           },
@@ -41,4 +42,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig);
