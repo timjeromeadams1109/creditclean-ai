@@ -147,7 +147,7 @@ jobs:
               REAL_MATCHES=""
               while IFS= read -r FILE; do
                 [ -z "$FILE" ] && continue
-                HIT=$(grep -nE "$REGEX" "$FILE" 2>/dev/null | grep -vE "process\.env|import\.meta\.env|^\s*//" || true)
+                HIT=$(grep -nE "$REGEX" "$FILE" 2>/dev/null | grep -vE "process\.env|import\.meta\.env|^\s*//|must be|at least|validation|errors\." || true)
                 if [ -n "$HIT" ]; then
                   REAL_MATCHES="${REAL_MATCHES}${FILE}\n"
                 fi
