@@ -45,14 +45,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       # ── 1. Dependency Audit ──────────────────────────────────
       - name: Run npm audit
@@ -63,7 +65,7 @@ jobs:
 
           # Capture full audit output
           set +e
-          AUDIT_OUTPUT=$(npm audit --audit-level=high 2>&1)
+          AUDIT_OUTPUT=$(bun audit --audit-level=high 2>&1)
           AUDIT_EXIT=$?
           set -e
 
@@ -76,9 +78,9 @@ jobs:
           else
             echo "audit_status=fail" >> $GITHUB_OUTPUT
             # Count vulnerabilities by severity
-            CRITICAL=$(npm audit --json 2>/dev/null | jq '.metadata.vulnerabilities.critical // 0')
-            HIGH=$(npm audit --json 2>/dev/null | jq '.metadata.vulnerabilities.high // 0')
-            MODERATE=$(npm audit --json 2>/dev/null | jq '.metadata.vulnerabilities.moderate // 0')
+            CRITICAL=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.critical // 0')
+            HIGH=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.high // 0')
+            MODERATE=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.moderate // 0')
             echo "audit_detail=${CRITICAL} critical, ${HIGH} high, ${MODERATE} moderate vulnerabilities" >> $GITHUB_OUTPUT
             echo "> **${CRITICAL} critical, ${HIGH} high, ${MODERATE} moderate** vulnerabilities found." >> $GITHUB_STEP_SUMMARY
           fi
@@ -190,7 +192,7 @@ jobs:
           echo "## Build Verification" >> $GITHUB_STEP_SUMMARY
 
           set +e
-          BUILD_OUTPUT=$(npm run build 2>&1)
+          BUILD_OUTPUT=$(bun run build 2>&1)
           BUILD_EXIT=$?
           set -e
 
