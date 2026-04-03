@@ -29,6 +29,7 @@ jobs:
 
       - name: Run ESLint security rules
         run: |
+          # Create inline security config
           cat > /tmp/eslint-security.config.mjs << 'ESLINTEOF'
           import security from "eslint-plugin-security";
           export default [
