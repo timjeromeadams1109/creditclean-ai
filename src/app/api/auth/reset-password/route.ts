@@ -3,8 +3,13 @@ import { hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { validate, resetPasswordSchema } from "@/lib/validation";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  if (!isTrustedSource(req) && !validateOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = checkRateLimit(ip, "auth");
   if (!rl.allowed) return rateLimitResponse(rl);

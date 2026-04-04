@@ -5,8 +5,13 @@ import { sendNotification } from "@/lib/email";
 import { passwordResetEmail } from "@/lib/email-templates";
 import crypto from "crypto";
 import { validate, forgotPasswordSchema } from "@/lib/validation";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  if (!isTrustedSource(req) && !validateOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = checkRateLimit(ip, "auth");
   if (!rl.allowed) return rateLimitResponse(rl);

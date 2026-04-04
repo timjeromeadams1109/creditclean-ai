@@ -13,11 +13,16 @@ import {
   Bureau,
   ItemType,
 } from "@/lib/disputes";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isTrustedSource(_req) && !validateOrigin(_req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

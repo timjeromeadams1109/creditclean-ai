@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { validate, changelogCreateSchema, changelogDeleteSchema } from "@/lib/validation";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,10 @@ export async function GET() {
 
 // POST /api/admin/changelog — add a new entry
 export async function POST(request: Request) {
+  if (!isTrustedSource(request) && !validateOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -62,6 +67,10 @@ export async function POST(request: Request) {
 
 // DELETE /api/admin/changelog — delete an entry
 export async function DELETE(request: Request) {
+  if (!isTrustedSource(request) && !validateOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { validate, disputeUpdateSchema } from "@/lib/validation";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export async function GET(
   _req: NextRequest,
@@ -46,6 +47,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
+  if (!isTrustedSource(req) && !validateOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);

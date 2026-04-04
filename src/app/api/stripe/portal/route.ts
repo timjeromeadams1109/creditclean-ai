@@ -3,13 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 /**
  * POST /api/stripe/portal
  * Creates a Stripe Customer Portal session for self-service billing management.
  * Users can update payment methods, view invoices, and cancel subscriptions.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  if (!isTrustedSource(request) && !validateOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

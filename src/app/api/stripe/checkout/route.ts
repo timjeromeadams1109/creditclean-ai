@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { validate, stripeCheckoutSchema } from "@/lib/validation";
+import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 /**
  * POST /api/stripe/checkout
@@ -12,6 +13,10 @@ import { validate, stripeCheckoutSchema } from "@/lib/validation";
  * Requires the CROA disclosure to be accepted (checked client-side).
  */
 export async function POST(req: NextRequest) {
+  if (!isTrustedSource(req) && !validateOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
