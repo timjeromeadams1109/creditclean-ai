@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+
+const itemUpdateSchema = z.object({
+  bureau: z.string().optional(),
+  item_type: z.string().optional(),
+  creditor_name: z.string().optional(),
+  account_number: z.string().optional().nullable(),
+  balance: z.number().optional().nullable(),
+  original_balance: z.number().optional().nullable(),
+  date_opened: z.string().optional().nullable(),
+  date_reported: z.string().optional().nullable(),
+  status: z.string().optional(),
+  collector_name: z.string().optional().nullable(),
+  collector_address: z.string().optional().nullable(),
+  remarks: z.string().optional().nullable(),
+  is_medical: z.boolean().optional(),
+  late_payment_dates: z.array(z.string()).optional().nullable(),
+  inquiry_date: z.string().optional().nullable(),
+  inquiry_creditor: z.string().optional().nullable(),
+  user_notes: z.string().optional().nullable(),
+});
 
 export async function GET(
   _req: NextRequest,
@@ -58,12 +79,12 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  { params }: { params: Promise<{ id: string }> }
-) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -75,6 +96,13 @@ export async function PUT(
 
   try {
     const body = await req.json();
+    const validation = itemUpdateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
     // Verify ownership
     const { data: existing } = await supabase
@@ -88,12 +116,9 @@ export async function PUT(
       return NextResponse.json({ error: "Credit item not found" }, { status: 404 });
     }
 
-    // Remove fields that shouldn't be updated directly
-    const { id: _id, user_id: _uid, created_at: _ca, ...updateFields } = body;
-
     const { data, error } = await supabase
       .from("credit_items")
-      .update({ ...updateFields, updated_at: new Date().toISOString() })
+      .update({ ...validation.data, updated_at: new Date().toISOString() })
       .eq("id", id)
       .eq("user_id", userId)
       .select()

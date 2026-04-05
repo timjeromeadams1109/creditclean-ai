@@ -47,12 +47,12 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  { params }: { params: Promise<{ id: string }> }
-) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
