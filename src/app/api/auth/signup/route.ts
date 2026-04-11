@@ -7,8 +7,10 @@ import { sendNotification } from "@/lib/email";
 import { welcomeEmail } from "@/lib/email-templates";
 import { validate, signupSchema } from "@/lib/validation";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -66,7 +68,8 @@ export async function POST(req: NextRequest) {
     sendNotification([normalizedEmail], welcome.subject, welcome.html).catch(() => {});
 
     return NextResponse.json({ success: true }, { status: 201 });
-  } catch {
+  } catch (err) {
+    logError(err, { endpoint: '/api/auth/signup' });
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

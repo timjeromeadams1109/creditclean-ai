@@ -16,6 +16,7 @@ import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 import {
   decryptSecret,
   verifyTotpCode,
@@ -29,6 +30,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
     .eq("id", userId);
 
   if (error) {
-    console.error("[POST /api/auth/mfa/verify-setup]", error);
+    logError(error, { endpoint: '/api/auth/mfa/verify-setup' });
     return NextResponse.json({ error: "Failed to enable MFA" }, { status: 500 });
   }
 

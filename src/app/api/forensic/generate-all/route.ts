@@ -13,8 +13,10 @@ import {
 } from "@/lib/disputes/types";
 import { validate, forensicGenerateAllSchema } from "@/lib/validation";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
       .select("id");
 
     if (itemsError || !creditItems) {
-      console.error("Failed to batch create credit items:", itemsError);
+      logError(itemsError, { endpoint: '/api/forensic/generate-all', context: 'batch_credit_items' });
       return NextResponse.json({ error: "Failed to create credit items." }, { status: 500 });
     }
 
@@ -153,7 +155,7 @@ export async function POST(req: NextRequest) {
       .select("id");
 
     if (roundsError) {
-      console.error("Failed to batch create dispute rounds:", roundsError);
+      logError(roundsError, { endpoint: '/api/forensic/generate-all', context: 'batch_dispute_rounds' });
     }
 
     const generatedLetters = lettersToInsert.map(({ action, letter, creditItemId }, i) => ({
@@ -171,7 +173,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("Generate all letters error:", err);
+    logError(err, { endpoint: '/api/forensic/generate-all' });
     return NextResponse.json(
       { error: "Failed to generate letters. Please try again." },
       { status: 500 }

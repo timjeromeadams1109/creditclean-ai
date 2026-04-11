@@ -14,6 +14,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { decryptSecret, verifyTotpCode, verifyBackupCode } from "@/lib/mfa";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 
 const BodySchema = z.object({
   code: z
@@ -24,6 +25,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (fetchError || !profile) {
-    console.error("[POST /api/auth/mfa/disable] fetch", fetchError);
+    logError(fetchError, { endpoint: '/api/auth/mfa/disable', context: 'fetch_profile' });
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
     try {
       plainSecret = decryptSecret(profile.mfa_secret);
     } catch {
-      console.error("[POST /api/auth/mfa/disable] decrypt failed");
+      logError(new Error('decrypt failed'), { endpoint: '/api/auth/mfa/disable', context: 'decrypt' });
       return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
     verified = verifyTotpCode(plainSecret, code);
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
     .eq("id", userId);
 
   if (updateError) {
-    console.error("[POST /api/auth/mfa/disable]", updateError);
+    logError(updateError, { endpoint: '/api/auth/mfa/disable', context: 'update_profile' });
     return NextResponse.json({ error: "Failed to disable MFA" }, { status: 500 });
   }
 

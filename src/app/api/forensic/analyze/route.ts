@@ -7,8 +7,10 @@ import { checkUsageLimit } from "@/lib/usage-limits";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { validate, forensicAnalyzeSchema } from "@/lib/validation";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -92,13 +94,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (dbError) {
-      console.error("Failed to save forensic report:", dbError);
+      logError(dbError, { endpoint: '/api/forensic/analyze', context: 'db_save' });
       // Continue — return report even if save fails
     }
 
     return NextResponse.json({ report }, { status: 201 });
   } catch (err) {
-    console.error("Forensic analysis error:", err);
+    logError(err, { endpoint: '/api/forensic/analyze' });
     return NextResponse.json(
       { error: "Analysis failed. Please try again." },
       { status: 500 }

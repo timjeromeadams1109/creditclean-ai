@@ -24,10 +24,9 @@ export const authOptions: NextAuthOptions = {
         const ownerEmail = process.env.OWNER_EMAIL;
         const ownerPassword = process.env.OWNER_PASSWORD;
         if (ownerEmail && ownerPassword && credentials.email === ownerEmail) {
-          const isHash = ownerPassword.startsWith("$2");
-          const valid = isHash
-            ? await compare(credentials.password, ownerPassword)
-            : credentials.password === ownerPassword;
+          // Reject owner login if OWNER_PASSWORD is not a bcrypt hash — plaintext fallback removed
+          if (!ownerPassword.startsWith("$2")) return null;
+          const valid = await compare(credentials.password, ownerPassword);
           if (valid) {
             return { id: "owner", name: "Owner", email: ownerEmail };
           }

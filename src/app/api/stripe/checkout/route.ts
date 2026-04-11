@@ -6,6 +6,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { validate, stripeCheckoutSchema } from "@/lib/validation";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
+import { logError, logRequest } from "@/lib/logger";
 
 /**
  * POST /api/stripe/checkout
@@ -13,6 +14,7 @@ import { validateOrigin, isTrustedSource } from "@/lib/csrf";
  * Requires the CROA disclosure to be accepted (checked client-side).
  */
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -81,6 +83,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {
+    logError(err, { endpoint: '/api/stripe/checkout' });
     const message = err instanceof Error ? err.message : "Failed to create checkout session";
     return NextResponse.json({ error: message }, { status: 500 });
   }

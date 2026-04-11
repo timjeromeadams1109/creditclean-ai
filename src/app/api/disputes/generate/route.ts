@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkUsageLimit } from "@/lib/usage-limits";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { logError, logRequest } from "@/lib/logger";
 import {
   determineNextStrategy,
   generateLetter,
@@ -20,6 +21,7 @@ import { validate, disputeGenerateSchema } from "@/lib/validation";
 import { validateOrigin, isTrustedSource } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   if (!isTrustedSource(req) && !validateOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -212,6 +214,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err) {
+    logError(err, { endpoint: '/api/disputes/generate' });
     const message = err instanceof Error ? err.message : "Failed to generate dispute letter";
     return NextResponse.json({ error: message }, { status: 500 });
   }

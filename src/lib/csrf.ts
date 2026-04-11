@@ -9,10 +9,22 @@
  *   }
  */
 
-const ALLOWED_ORIGINS = new Set([
-  "https://creditclean.ai",
-  // TODO: add Vercel preview URL if needed
-]);
+// Build allowed origins at runtime so Vercel preview deployments are included.
+// NEXT_PUBLIC_APP_URL is set per-deployment by Vercel (or manually in .env.local).
+const buildAllowedOrigins = (): Set<string> => {
+  const origins = new Set(["https://creditclean.ai"]);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) {
+    try {
+      origins.add(new URL(appUrl).origin);
+    } catch {
+      // Malformed URL — skip silently rather than crashing at module load
+    }
+  }
+  return origins;
+};
+
+const ALLOWED_ORIGINS = buildAllowedOrigins();
 
 // Trusted sources that skip origin checks (webhooks, internal APIs)
 const TRUSTED_HEADERS: Record<string, string> = {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { sendNotification } from "@/lib/email";
+import { logError, logRequest } from "@/lib/logger";
 import {
   paymentConfirmationEmail,
   cancellationEmail,
@@ -15,6 +16,7 @@ import type Stripe from "stripe";
  * Upgrades/downgrades user tier and sends transactional emails.
  */
 export async function POST(request: Request) {
+  logRequest(request);
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -192,7 +194,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (err) {
-    console.error("[Stripe Webhook] Error processing event:", event.type, err);
+    logError(err, { endpoint: '/api/stripe/webhook', eventType: event.type });
     // Return 200 anyway — Stripe retries on 5xx and we don't want duplicate processing
   }
 
