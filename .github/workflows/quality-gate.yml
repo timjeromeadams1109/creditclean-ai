@@ -65,7 +65,7 @@ jobs:
 
           # Capture full audit output
           set +e
-          AUDIT_OUTPUT=$(bun audit --audit-level=high 2>&1)
+          AUDIT_OUTPUT=$(bun audit 2>&1)
           AUDIT_EXIT=$?
           set -e
 
@@ -73,14 +73,21 @@ jobs:
 
           if [ $AUDIT_EXIT -eq 0 ]; then
             echo "audit_status=pass" >> $GITHUB_OUTPUT
-            echo "audit_detail=No high or critical vulnerabilities found" >> $GITHUB_OUTPUT
-            echo "> No high or critical vulnerabilities found." >> $GITHUB_STEP_SUMMARY
+            echo "audit_detail=No vulnerabilities found" >> $GITHUB_OUTPUT
+            echo "> No vulnerabilities found." >> $GITHUB_STEP_SUMMARY
           else
-            echo "audit_status=fail" >> $GITHUB_OUTPUT
-            # Count vulnerabilities by severity
-            CRITICAL=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.critical // 0')
-            HIGH=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.high // 0')
-            MODERATE=$(bun audit --json 2>/dev/null | jq '.metadata.vulnerabilities.moderate // 0')
+            # Parse severity counts from bun audit output
+            CRITICAL=$(echo "$AUDIT_OUTPUT" | grep -oE '[0-9]+ critical' | grep -oE '[0-9]+' | head -1 || true)
+            HIGH=$(echo "$AUDIT_OUTPUT" | grep -oE '[0-9]+ high' | grep -oE '[0-9]+' | head -1 || true)
+            MODERATE=$(echo "$AUDIT_OUTPUT" | grep -oE '[0-9]+ moderate' | grep -oE '[0-9]+' | head -1 || true)
+            CRITICAL=${CRITICAL:-0}
+            HIGH=${HIGH:-0}
+            MODERATE=${MODERATE:-0}
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "audit_status=fail" >> $GITHUB_OUTPUT
+            else
+              echo "audit_status=moderate" >> $GITHUB_OUTPUT
+            fi
             echo "audit_detail=${CRITICAL} critical, ${HIGH} high, ${MODERATE} moderate vulnerabilities" >> $GITHUB_OUTPUT
             echo "> **${CRITICAL} critical, ${HIGH} high, ${MODERATE} moderate** vulnerabilities found." >> $GITHUB_STEP_SUMMARY
           fi
@@ -230,7 +237,10 @@ jobs:
           # Deduct for audit failures (critical/high = -30, moderate-only = -10)
           if [ "${{ steps.audit.outputs.audit_status }}" = "fail" ]; then
             SCORE=$((SCORE - 30))
-            ISSUES="${ISSUES}Dependency vulnerabilities found. "
+            ISSUES="${ISSUES}High/critical dependency vulnerabilities found. "
+          elif [ "${{ steps.audit.outputs.audit_status }}" = "moderate" ]; then
+            SCORE=$((SCORE - 10))
+            ISSUES="${ISSUES}Moderate dependency vulnerabilities found. "
           fi
 
           # Deduct for secret leaks (-40 per occurrence, capped)
@@ -291,7 +301,7 @@ jobs:
             const buildStatus = '${{ steps.build.outputs.build_status }}';
             const issues = '${{ steps.score.outputs.issues }}';
 
-            const icon = (s) => s === 'pass' ? ':white_check_mark:' : ':x:';
+            const icon = (s) => s === 'pass' ? ':white_check_mark:' : s === 'moderate' ? ':warning:' : ':x:';
             const verdictIcon = verdict === 'PASSED' ? ':white_check_mark:' : ':x:';
 
             const body = [
