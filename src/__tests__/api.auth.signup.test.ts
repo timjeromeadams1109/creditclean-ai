@@ -60,14 +60,14 @@ function makeRequest(body: unknown, headers: Record<string, string> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.NODE_ENV = "development";
+  (process.env as unknown as { NODE_ENV: string }).NODE_ENV = "development";
 });
 
 // ── Auth: CSRF / Origin checks ────────────────────────────────────────
 
 describe("POST /api/auth/signup — CSRF", () => {
   it("blocks requests with no origin in production", async () => {
-    process.env.NODE_ENV = "production";
+    (process.env as unknown as { NODE_ENV: string }).NODE_ENV = "production";
     const req = new Request("http://localhost:3000/api/auth/signup", {
       method: "POST",
       headers: {

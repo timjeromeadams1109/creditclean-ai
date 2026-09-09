@@ -54,7 +54,7 @@ function buildProfileMock(stripeCustomerId: string | null = null) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.NODE_ENV = "development";
+  (process.env as unknown as { NODE_ENV: string }).NODE_ENV = "development";
 });
 
 // ── Auth ─────────────────────────────────────────────────────────────
